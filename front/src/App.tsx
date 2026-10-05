@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router"
 
 import { RedirectIfSignedIn, RequireAuth } from "@/components/auth/RequireAuth"
 import { AuthCallbackPage } from "@/pages/AuthCallbackPage"
+import { CognitoLoginPage } from "@/pages/CognitoLoginPage"
 import { ConfirmPage } from "@/pages/ConfirmPage"
 import { HomePage } from "@/pages/HomePage"
 import { LoginPage } from "@/pages/LoginPage"
@@ -15,6 +16,22 @@ export default function App() {
         element={
           <RedirectIfSignedIn>
             <LoginPage />
+          </RedirectIfSignedIn>
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          <RedirectIfSignedIn>
+            <CognitoLoginPage />
+          </RedirectIfSignedIn>
+        }
+      />
+      <Route
+        path="/login/"
+        element={
+          <RedirectIfSignedIn>
+            <CognitoLoginPage />
           </RedirectIfSignedIn>
         }
       />
