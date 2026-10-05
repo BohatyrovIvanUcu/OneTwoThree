@@ -3,53 +3,52 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Palette taken from learn.ucu.edu.ua: burgundy brand, light grey page, dark footer. */
 :root {
-  --radius: 0.25rem;
-  --background: #f7f7f7;
-  --foreground: #343a40;
-  --card: #ffffff;
-  --card-foreground: #343a40;
-  --popover: #ffffff;
-  --popover-foreground: #343a40;
-  --primary: #7f1716;
+  --radius: 0.875rem;
+  --background: #0b0f19;
+  --foreground: #f8fafc;
+  --card: rgba(255, 255, 255, 0.06);
+  --card-foreground: #f8fafc;
+  --popover: rgba(15, 23, 42, 0.85);
+  --popover-foreground: #f8fafc;
+  --primary: #6366f1;
   --primary-foreground: #ffffff;
-  --secondary: #f3e8e8;
-  --secondary-foreground: #7f1716;
-  --muted: #f1f1f1;
-  --muted-foreground: #4c5a73;
-  --accent: #f7eeee;
-  --accent-foreground: #7f1716;
-  --destructive: #b42318;
-  --border: #e2e2e2;
-  --input: #d6d6d6;
-  --ring: #7f1716;
+  --secondary: rgba(255, 255, 255, 0.1);
+  --secondary-foreground: #f1f5f9;
+  --muted: rgba(255, 255, 255, 0.08);
+  --muted-foreground: #94a3b8;
+  --accent: rgba(255, 255, 255, 0.12);
+  --accent-foreground: #ffffff;
+  --destructive: #f43f5e;
+  --border: rgba(255, 255, 255, 0.14);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #818cf8;
 
-  --brand: #7f1716;
-  --brand-dark: #661211;
-  --footer: #424141;
-  --footer-bottom: #222222;
+  --brand: #6366f1;
+  --brand-dark: #4f46e5;
+  --footer: rgba(15, 23, 42, 0.7);
+  --footer-bottom: rgba(9, 13, 22, 0.9);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: #0b0f19;
+  --foreground: #f8fafc;
+  --card: rgba(255, 255, 255, 0.06);
+  --card-foreground: #f8fafc;
+  --popover: rgba(15, 23, 42, 0.85);
+  --popover-foreground: #f8fafc;
+  --primary: #818cf8;
+  --primary-foreground: #0b0f19;
+  --secondary: rgba(255, 255, 255, 0.1);
+  --secondary-foreground: #f8fafc;
+  --muted: rgba(255, 255, 255, 0.08);
+  --muted-foreground: #94a3b8;
+  --accent: rgba(255, 255, 255, 0.12);
+  --accent-foreground: #ffffff;
+  --destructive: #f43f5e;
+  --border: rgba(255, 255, 255, 0.14);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #818cf8;
 }
 
 @theme inline {
@@ -58,10 +57,10 @@
   --color-brand-dark: var(--brand-dark);
   --color-footer: var(--footer);
   --color-footer-bottom: var(--footer-bottom);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 6px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -87,6 +86,97 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply min-h-screen bg-[#090d16] text-foreground antialiased selection:bg-indigo-500/30 selection:text-white;
+    background-image:
+      radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.22) 0%, transparent 40%),
+      radial-gradient(circle at 85% 25%, rgba(236, 72, 153, 0.18) 0%, transparent 35%),
+      radial-gradient(circle at 50% 85%, rgba(56, 189, 248, 0.18) 0%, transparent 45%),
+      radial-gradient(circle at 80% 85%, rgba(139, 92, 246, 0.16) 0%, transparent 40%),
+      linear-gradient(135deg, #070a12 0%, #0c1222 50%, #151932 100%);
+    background-attachment: fixed;
   }
+}
+
+/* Glassmorphism custom utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 8px 32px 0 rgba(0, 0, 0, 0.37),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 12px 36px 0 rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+.glass-popover {
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 20px 50px 0 rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.glass-button-primary {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.85) 0%, rgba(139, 92, 246, 0.85) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 4px 20px 0 rgba(99, 102, 241, 0.35),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-button-primary:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(139, 92, 246, 0.95) 100%);
+  box-shadow:
+    0 6px 28px 0 rgba(99, 102, 241, 0.5),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+.glass-button-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 2px 8px 0 rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+/* Translucent custom scrollbar for glass calendar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  backdrop-filter: blur(8px);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }

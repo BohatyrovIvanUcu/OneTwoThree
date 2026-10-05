@@ -5,7 +5,7 @@ import { googleEnabled, startGoogleSignIn } from "@/lib/auth"
 
 function GoogleIcon() {
   return (
-    <svg viewBox="0 0 48 48" aria-hidden className="size-5">
+    <svg viewBox="0 0 48 48" aria-hidden className="size-5 shrink-0">
       <path
         fill="#FFC107"
         d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"
@@ -36,7 +36,7 @@ export function GoogleButton({ label }: { label: string }) {
       <Button
         type="button"
         variant="outline"
-        className="h-10 w-full gap-2.5"
+        className="h-11 w-full gap-3 rounded-xl border border-white/20 bg-white/[0.08] text-white shadow-xs backdrop-blur-md transition-all hover:border-white/30 hover:bg-white/[0.15] active:scale-[0.98]"
         onClick={start}
         disabled={!enabled}
         aria-describedby={enabled ? undefined : "google-soon"}
@@ -44,7 +44,7 @@ export function GoogleButton({ label }: { label: string }) {
         <GoogleIcon /> {label}
       </Button>
       {!enabled && (
-        <p id="google-soon" className="mt-1.5 text-center text-xs text-muted-foreground">
+        <p id="google-soon" className="mt-2 text-center text-xs text-slate-400">
           Google sign-in is coming soon.
         </p>
       )}
@@ -54,10 +54,10 @@ export function GoogleButton({ label }: { label: string }) {
 
 export function OrDivider() {
   return (
-    <div className="my-6 flex items-center gap-3 text-xs tracking-wide text-muted-foreground uppercase">
-      <span className="h-px flex-1 bg-border" />
+    <div className="my-6 flex items-center gap-3 text-xs font-medium tracking-wider text-slate-400 uppercase">
+      <span className="h-px flex-1 bg-white/15" />
       or
-      <span className="h-px flex-1 bg-border" />
+      <span className="h-px flex-1 bg-white/15" />
     </div>
   )
 }

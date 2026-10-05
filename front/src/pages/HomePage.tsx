@@ -40,26 +40,36 @@ export function HomePage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+      {/* Ambient background glows */}
+      <div className="pointer-events-none fixed top-1/4 -left-48 size-[500px] rounded-full bg-indigo-500/20 blur-[130px]" />
+      <div className="pointer-events-none fixed top-1/3 -right-48 size-[500px] rounded-full bg-purple-500/18 blur-[130px]" />
+      <div className="pointer-events-none fixed bottom-10 left-1/3 size-[400px] rounded-full bg-sky-500/15 blur-[120px]" />
+
       <SiteHeader onNewMeeting={() => openForm()} />
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6">
-        <section className="rounded-sm border bg-card p-3 sm:p-4">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+        <section className="relative rounded-3xl border border-white/15 bg-white/[0.04] p-4 shadow-[0_16px_48px_0_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.18)] backdrop-blur-2xl transition-all sm:p-6">
           <h1 className="sr-only">Meetings</h1>
 
           {isPending ? (
-            <div className="space-y-2" aria-label="Loading meetings">
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-[480px] w-full" />
+            <div className="space-y-4" aria-label="Loading meetings">
+              <Skeleton className="h-12 w-full rounded-2xl bg-white/10" />
+              <Skeleton className="h-[520px] w-full rounded-2xl bg-white/5" />
             </div>
           ) : isError ? (
             <div
               role="alert"
-              className="rounded-sm border border-destructive/50 p-4 text-destructive"
+              className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-6 text-rose-200 backdrop-blur-xl"
             >
-              <p className="font-medium">Could not load meetings</p>
-              <p className="text-sm">{error.message}</p>
-              <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
+              <p className="text-base font-semibold">Could not load meetings</p>
+              <p className="mt-1 text-sm text-rose-200/80">{error.message}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 border-rose-400/40 hover:bg-rose-500/20"
+                onClick={() => refetch()}
+              >
                 Retry
               </Button>
             </div>

@@ -55,18 +55,17 @@ export function LoginPage() {
 
   return (
     <AuthLayout>
-      <h1 className="text-2xl font-semibold text-foreground">Sign in</h1>
-      <p className="mt-1.5 text-sm text-muted-foreground">
-        Welcome back. Sign in to see your meetings.
-      </p>
+      <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Sign in</h1>
+      <p className="mt-2 text-sm text-slate-300/80">Welcome back. Sign in to see your meetings.</p>
 
       {state.confirmed && (
-        <p className="mt-6 flex items-center gap-2 rounded-sm bg-secondary px-3 py-2 text-sm text-secondary-foreground">
-          <CircleCheck className="size-4 shrink-0" /> Account confirmed. Sign in to continue.
+        <p className="mt-5 flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/15 p-3 text-sm text-emerald-200 backdrop-blur-md">
+          <CircleCheck className="size-4 shrink-0 text-emerald-400" /> Account confirmed. Sign in to
+          continue.
         </p>
       )}
 
-      <div className="mt-8">
+      <div className="mt-7">
         <GoogleButton label="Continue with Google" />
       </div>
       <OrDivider />
@@ -78,7 +77,7 @@ export function LoginPage() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="text-xs font-medium text-slate-200">Email</FormLabel>
                 <FormControl>
                   <Input
                     type="email"
@@ -96,7 +95,7 @@ export function LoginPage() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel className="text-xs font-medium text-slate-200">Password</FormLabel>
                 <FormControl>
                   <PasswordInput autoComplete="current-password" {...field} />
                 </FormControl>
@@ -105,19 +104,26 @@ export function LoginPage() {
             )}
           />
           {form.formState.errors.root && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm font-medium text-rose-300">
               {form.formState.errors.root.message}
             </p>
           )}
-          <Button type="submit" className="h-10 w-full" disabled={form.formState.isSubmitting}>
+          <Button
+            type="submit"
+            className="mt-2 h-11 w-full cursor-pointer text-base font-semibold shadow-lg"
+            disabled={form.formState.isSubmitting}
+          >
             {form.formState.isSubmitting ? "Signing in…" : "Sign in"}
           </Button>
         </form>
       </Form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-6 text-center text-sm text-slate-300">
         Don&apos;t have an account?{" "}
-        <Link to="/signup" className="font-medium text-primary underline-offset-4 hover:underline">
+        <Link
+          to="/signup"
+          className="font-semibold text-indigo-400 underline-offset-4 hover:text-indigo-300 hover:underline"
+        >
           Sign up
         </Link>
       </p>

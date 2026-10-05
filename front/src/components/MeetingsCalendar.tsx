@@ -63,36 +63,44 @@ interface MeetingActions {
 function MeetingDetails({ meeting, onEdit, onDelete }: { meeting: Meeting } & MeetingActions) {
   const start = new Date(meeting.starts_at)
   return (
-    <div className="space-y-3 text-sm">
+    <div className="space-y-3.5 text-sm">
       <div className="flex items-start justify-between gap-2">
-        <h4 className="text-base leading-snug font-semibold">{meeting.title}</h4>
-        <div className="-mt-1 -mr-2 flex shrink-0">
+        <h4 className="text-base leading-snug font-semibold tracking-tight text-white">
+          {meeting.title}
+        </h4>
+        <div className="-mt-1 -mr-2 flex shrink-0 gap-1">
           <Button
             variant="ghost"
             size="icon"
             aria-label={`Edit ${meeting.title}`}
             onClick={() => onEdit(meeting)}
+            className="size-8 rounded-lg hover:bg-white/10"
           >
-            <Pencil />
+            <Pencil className="size-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             aria-label={`Delete ${meeting.title}`}
             onClick={() => onDelete(meeting)}
+            className="size-8 rounded-lg hover:bg-rose-500/20"
           >
-            <Trash2 className="text-destructive" />
+            <Trash2 className="size-3.5 text-rose-400" />
           </Button>
         </div>
       </div>
-      <p className="flex items-center gap-2 text-muted-foreground">
-        <Clock className="size-4 shrink-0" />
+      <p className="flex items-center gap-2 text-xs text-indigo-200/90">
+        <Clock className="size-3.5 shrink-0 text-indigo-300" />
         {formatLongDay(start)}, {formatTime(meeting.starts_at)} – {formatTime(meeting.ends_at)}
       </p>
-      {meeting.description && <p className="whitespace-pre-line">{meeting.description}</p>}
+      {meeting.description && (
+        <p className="text-xs leading-relaxed whitespace-pre-line text-slate-300">
+          {meeting.description}
+        </p>
+      )}
       {meeting.place && (
-        <p className="flex items-center gap-2">
-          <MapPin className="size-4 shrink-0 text-muted-foreground" /> {meeting.place}
+        <p className="flex items-center gap-2 text-xs text-slate-300">
+          <MapPin className="size-3.5 shrink-0 text-slate-400" /> {meeting.place}
         </p>
       )}
       {meeting.call_link && (
@@ -100,15 +108,15 @@ function MeetingDetails({ meeting, onEdit, onDelete }: { meeting: Meeting } & Me
           href={meeting.call_link}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-400/30 bg-indigo-500/20 px-2.5 py-1 text-xs font-medium text-indigo-200 shadow-xs transition-all hover:bg-indigo-500/35 hover:text-white"
         >
-          Join call <ExternalLink className="size-3.5" />
+          Join call <ExternalLink className="size-3" />
         </a>
       )}
       {meeting.participants.length > 0 && (
-        <div className="flex items-start gap-2">
-          <Users className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-          <div className="flex flex-wrap gap-1">
+        <div className="flex items-start gap-2 border-t border-white/10 pt-1">
+          <Users className="mt-0.5 size-3.5 shrink-0 text-slate-400" />
+          <div className="flex flex-wrap gap-1.5">
             {meeting.participants.map((p) => (
               <Badge key={p.id} variant="secondary" title={p.email}>
                 {p.name}
@@ -136,7 +144,7 @@ function MeetingBlock({ segment, onEdit, onDelete }: { segment: DaySegment } & M
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="absolute z-10 overflow-hidden rounded-sm border-l-4 border-brand bg-secondary px-1.5 py-0.5 text-left text-xs text-secondary-foreground shadow-xs transition-colors hover:bg-[#ecdcdc] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:bg-[#ecdcdc]"
+          className="absolute z-10 cursor-pointer overflow-hidden rounded-xl border border-l-4 border-indigo-300/35 border-l-indigo-400 bg-indigo-500/25 px-2 py-1 text-left text-xs text-white shadow-[0_4px_16px_rgba(79,70,229,0.25),inset_0_1px_0_rgba(255,255,255,0.25)] backdrop-blur-md transition-all hover:scale-[1.008] hover:border-indigo-200/50 hover:bg-indigo-500/35 hover:shadow-[0_6px_20px_rgba(79,70,229,0.4)] focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none data-[state=open]:bg-indigo-500/40"
           style={{
             top: (startMin / 60) * HOUR_HEIGHT + 1,
             height,
@@ -144,14 +152,26 @@ function MeetingBlock({ segment, onEdit, onDelete }: { segment: DaySegment } & M
             width: `calc(${100 / columns}% - 4px)`,
           }}
         >
-          <span className={cn("block truncate font-semibold", compact && "inline")}>
+          <span
+            className={cn(
+              "block truncate leading-tight font-semibold text-white",
+              compact && "inline",
+            )}
+          >
             {meeting.title}
           </span>
-          <span className={cn("block truncate", compact && "ml-1 inline")}>
+          <span
+            className={cn(
+              "block truncate text-[11px] text-indigo-200/90",
+              compact && "ml-1 inline",
+            )}
+          >
             {formatTime(meeting.starts_at)} – {formatTime(meeting.ends_at)}
           </span>
           {height >= 64 && meeting.place && (
-            <span className="block truncate text-muted-foreground">{meeting.place}</span>
+            <span className="mt-0.5 block truncate text-[10px] text-slate-300/80">
+              {meeting.place}
+            </span>
           )}
         </button>
       </PopoverTrigger>
@@ -191,36 +211,49 @@ export function MeetingsCalendar({
   }, [view])
 
   return (
-    <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Button variant="outline" size="sm" onClick={() => setAnchor(new Date())}>
-          Today
-        </Button>
-        <div className="flex">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
           <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Previous ${view}`}
-            onClick={() => setAnchor(shiftAnchor(view, anchor, -1))}
+            variant="outline"
+            size="sm"
+            onClick={() => setAnchor(new Date())}
+            className="rounded-xl"
           >
-            <ChevronLeft />
+            Today
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Next ${view}`}
-            onClick={() => setAnchor(shiftAnchor(view, anchor, 1))}
+          <div className="flex items-center rounded-xl border border-white/15 bg-white/[0.06] p-0.5 backdrop-blur-md">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Previous ${view}`}
+              onClick={() => setAnchor(shiftAnchor(view, anchor, -1))}
+              className="rounded-lg hover:bg-white/15"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Next ${view}`}
+              onClick={() => setAnchor(shiftAnchor(view, anchor, 1))}
+              className="rounded-lg hover:bg-white/15"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+          <h3
+            className="ml-1 text-base font-semibold tracking-tight text-white sm:text-lg"
+            aria-live="polite"
           >
-            <ChevronRight />
-          </Button>
+            {formatPeriod(view, anchor)}
+          </h3>
         </div>
-        <h3 className="text-base font-semibold text-foreground sm:text-lg" aria-live="polite">
-          {formatPeriod(view, anchor)}
-        </h3>
+
         <div
           role="group"
           aria-label="Calendar view"
-          className="ml-auto inline-flex rounded-sm border bg-muted p-0.5"
+          className="inline-flex rounded-xl border border-white/15 bg-white/[0.06] p-1 shadow-inner backdrop-blur-md"
         >
           {VIEWS.map(({ value, label }) => (
             <button
@@ -229,8 +262,10 @@ export function MeetingsCalendar({
               aria-pressed={view === value}
               onClick={() => setView(value)}
               className={cn(
-                "rounded-[3px] px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
-                view === value && "bg-card text-brand shadow-xs",
+                "cursor-pointer rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all sm:text-sm",
+                view === value
+                  ? "border border-white/20 bg-gradient-to-r from-indigo-500/80 to-purple-600/80 text-white shadow-[0_2px_12px_rgba(99,102,241,0.4)]"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white",
               )}
             >
               {label}
@@ -242,31 +277,36 @@ export function MeetingsCalendar({
       {/* Fills the window below the header and toolbar, so the page itself barely scrolls. */}
       <div
         ref={scrollRef}
-        className="h-[calc(100dvh-10.5rem)] min-h-[420px] overflow-auto rounded-sm border"
+        className="h-[calc(100dvh-12rem)] min-h-[460px] overflow-auto rounded-2xl border border-white/15 bg-black/25 shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)] backdrop-blur-xl"
       >
         <div className={cn(view === "week" && "min-w-[720px]")}>
-          <div className="sticky top-0 z-20 grid border-b bg-card" style={gridColumns}>
+          <div
+            className="sticky top-0 z-20 grid border-b border-white/15 bg-slate-900/85 shadow-xs backdrop-blur-2xl"
+            style={gridColumns}
+          >
             <div />
             {days.map((day) => {
               const today = isSameDay(day, now)
               return (
                 <div
                   key={day.toISOString()}
-                  className="flex items-center justify-center gap-1.5 border-l py-1.5"
+                  className="flex items-center justify-center gap-2 border-l border-white/10 py-2.5"
                   aria-current={today ? "date" : undefined}
                 >
                   <span
                     className={cn(
-                      "text-xs font-medium tracking-wide text-muted-foreground uppercase",
-                      today && "text-brand",
+                      "text-xs font-medium tracking-wider uppercase",
+                      today ? "font-semibold text-indigo-300" : "text-slate-400",
                     )}
                   >
                     {formatWeekday(day)}
                   </span>
                   <span
                     className={cn(
-                      "flex size-7 items-center justify-center rounded-full text-sm font-medium",
-                      today && "bg-brand font-semibold text-white",
+                      "flex size-7 items-center justify-center rounded-full text-xs font-medium transition-all",
+                      today
+                        ? "bg-gradient-to-r from-indigo-500 to-purple-500 font-semibold text-white shadow-[0_0_14px_rgba(99,102,241,0.6)]"
+                        : "text-slate-300",
                     )}
                   >
                     {day.getDate()}
@@ -281,7 +321,7 @@ export function MeetingsCalendar({
               {HOURS.map((hour) => (
                 <div key={hour} className="relative" style={{ height: HOUR_HEIGHT }}>
                   {hour > 0 && (
-                    <span className="absolute -top-2 right-2 text-[11px] text-muted-foreground">
+                    <span className="absolute -top-2.5 right-2 font-mono text-[11px] text-slate-400/80">
                       {formatHour(hour)}
                     </span>
                   )}
@@ -296,7 +336,10 @@ export function MeetingsCalendar({
                   key={day.toISOString()}
                   role="region"
                   aria-label={formatLongDay(day)}
-                  className={cn("relative border-l", today && "bg-accent/40")}
+                  className={cn(
+                    "relative border-l border-white/[0.08]",
+                    today && "bg-indigo-500/[0.04]",
+                  )}
                 >
                   {HOURS.map((hour) => {
                     const slot = new Date(day)
@@ -308,7 +351,7 @@ export function MeetingsCalendar({
                         tabIndex={-1}
                         aria-label={`New meeting on ${formatLongDay(day)} at ${formatHour(hour)}`}
                         onClick={() => onCreateAt(slot)}
-                        className="block w-full border-b border-border/70 hover:bg-muted/70"
+                        className="block w-full cursor-pointer border-b border-white/[0.07] transition-colors hover:bg-white/[0.05]"
                         style={{ height: HOUR_HEIGHT }}
                       />
                     )
@@ -326,10 +369,10 @@ export function MeetingsCalendar({
                   {today && (
                     <div
                       aria-hidden
-                      className="pointer-events-none absolute right-0 left-0 z-10 border-t-2 border-destructive"
+                      className="pointer-events-none absolute right-0 left-0 z-10 border-t-2 border-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.8)]"
                       style={{ top: (minutesSinceMidnight(now) / 60) * HOUR_HEIGHT }}
                     >
-                      <span className="absolute -top-[5px] -left-[5px] size-2 rounded-full bg-destructive" />
+                      <span className="absolute -top-[5px] -left-[5px] size-2.5 animate-pulse rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,1)]" />
                     </div>
                   )}
                 </div>

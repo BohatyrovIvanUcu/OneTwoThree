@@ -62,10 +62,12 @@ export function SignUpPage() {
 
   return (
     <AuthLayout>
-      <h1 className="text-2xl font-semibold text-foreground">Create an account</h1>
-      <p className="mt-1.5 text-sm text-muted-foreground">Start scheduling meetings in a minute.</p>
+      <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+        Create an account
+      </h1>
+      <p className="mt-2 text-sm text-slate-300/80">Start scheduling meetings in a minute.</p>
 
-      <div className="mt-8">
+      <div className="mt-7">
         <GoogleButton label="Sign up with Google" />
       </div>
       <OrDivider />
@@ -77,7 +79,7 @@ export function SignUpPage() {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
+                <FormLabel className="text-xs font-medium text-slate-200">Name</FormLabel>
                 <FormControl>
                   <Input autoComplete="name" placeholder="Anna Kovalenko" {...field} />
                 </FormControl>
@@ -90,7 +92,7 @@ export function SignUpPage() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="text-xs font-medium text-slate-200">Email</FormLabel>
                 <FormControl>
                   <Input
                     type="email"
@@ -108,11 +110,11 @@ export function SignUpPage() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel className="text-xs font-medium text-slate-200">Password</FormLabel>
                 <FormControl>
                   <PasswordInput autoComplete="new-password" {...field} />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs text-slate-400">
                   At least 8 characters, with a lowercase letter and a number.
                 </FormDescription>
                 <FormMessage />
@@ -124,7 +126,9 @@ export function SignUpPage() {
             name="confirm"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Confirm password</FormLabel>
+                <FormLabel className="text-xs font-medium text-slate-200">
+                  Confirm password
+                </FormLabel>
                 <FormControl>
                   <PasswordInput autoComplete="new-password" {...field} />
                 </FormControl>
@@ -133,19 +137,26 @@ export function SignUpPage() {
             )}
           />
           {form.formState.errors.root && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm font-medium text-rose-300">
               {form.formState.errors.root.message}
             </p>
           )}
-          <Button type="submit" className="h-10 w-full" disabled={form.formState.isSubmitting}>
+          <Button
+            type="submit"
+            className="mt-2 h-11 w-full cursor-pointer text-base font-semibold shadow-lg"
+            disabled={form.formState.isSubmitting}
+          >
             {form.formState.isSubmitting ? "Creating account…" : "Create account"}
           </Button>
         </form>
       </Form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-6 text-center text-sm text-slate-300">
         Already have an account?{" "}
-        <Link to="/" className="font-medium text-primary underline-offset-4 hover:underline">
+        <Link
+          to="/"
+          className="font-semibold text-indigo-400 underline-offset-4 hover:text-indigo-300 hover:underline"
+        >
           Sign in
         </Link>
       </p>
