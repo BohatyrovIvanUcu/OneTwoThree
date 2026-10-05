@@ -345,6 +345,11 @@ aws-cognito-outputs: ## Show Cognito stack outputs (pool, client, Hosted UI doma
 	@aws cloudformation describe-stacks --stack-name $(COGNITO_STACK) \
 	  --query "Stacks[0].Outputs[].[OutputKey, OutputValue]" --output table
 
+.PHONY: aws-cognito-events
+aws-cognito-events: ## Show failure events for Cognito stack
+	@PAGER=cat aws cloudformation describe-stack-events --stack-name $(COGNITO_STACK) \
+	  --query "reverse(StackEvents[?ResourceStatus=='CREATE_FAILED' || ResourceStatus=='UPDATE_FAILED'].[LogicalResourceId,ResourceStatus,ResourceStatusReason])" --output table
+
 .PHONY: aws-cognito-destroy
 aws-cognito-destroy: aws-check ## Delete the Cognito stack — ALL user accounts are deleted with it
 	@read -p "Delete stack $(COGNITO_STACK) and every user account in it? [y/N] " ok && [ "$$ok" = y ]

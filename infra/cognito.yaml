@@ -74,9 +74,12 @@ Resources:
 
   ManagedLoginBranding:
     Type: AWS::Cognito::ManagedLoginBranding
-    DependsOn: UserPoolDomain
+    DependsOn:
+      - UserPoolDomain
+      - UserPoolClient
     Properties:
       UserPoolId: !Ref UserPool
+      ClientId: !Ref UserPoolClient
       UseCognitoProvidedValues: true
 
   GoogleIdentityProvider:
