@@ -6,10 +6,21 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user
 from app.db import get_db
 from app.models import User
-from app.schemas import MeetingCreate, MeetingRead
+from app.schemas import AiMeetingCreateRequest, MeetingCreate, MeetingRead
 from app.services import meetings as service
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
+
+
+@router.post("/ai", response_model=MeetingRead, status_code=status.HTTP_201_CREATED)
+def create_meeting_with_ai(
+    request: AiMeetingCreateRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    from app.routers.ai import create_meeting_with_ai as handle_ai_create
+
+    return handle_ai_create(request, db, user)
 
 
 @router.get("", response_model=list[MeetingRead])

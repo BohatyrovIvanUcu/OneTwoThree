@@ -66,11 +66,21 @@ infra/            # CloudFormation: cognito, backend-ecr, backend (Lambda + Auro
 | GET | `/api/participants?q=` | List/search participants |
 | POST | `/api/participants` | Create a participant (409 on duplicate email) |
 | DELETE | `/api/participants/{id}` | Delete a participant |
+| GET | `/api/ai/models` | List available AWS Bedrock foundation models |
+| POST | `/api/ai/parse-meeting` | Parse natural language prompt into meeting details using Bedrock |
+| POST | `/api/meetings/ai` | Parse prompt and schedule meeting directly using Bedrock |
 
 Everything except `/api/health` needs `Authorization: Bearer <Cognito ID token>`. Meetings are
 personal: each belongs to the user who created it (`owner_id`), and other users get 404 for it. The
 participant directory is shared. All IDs are UUIDs. A meeting needs a title, `starts_at` and `ends_at` (ISO 8601 with a timezone, end after start)
 and at least one of `call_link` or `place`.
+
+## AI Scheduling (AWS Bedrock)
+
+Meetings can be scheduled using natural language prompts powered by foundation models on **AWS Bedrock** (e.g. Amazon Nova Micro / Lite / Pro, Meta Llama 3 8B).
+- **In the UI**: Click **AI Schedule** in the header or **Fill with AI** inside the meeting form dialog.
+- **VPC Endpoint / PrivateLink**: In AWS Lambda (which runs inside private VPC subnets without NAT Gateway to save costs), AWS Bedrock Runtime is accessed privately via the `com.amazonaws.<region>.bedrock-runtime` VPC Interface Endpoint.
+
 
 ## Sign-in (Cognito)
 

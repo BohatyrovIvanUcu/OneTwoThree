@@ -3,7 +3,7 @@ from sqlalchemy import URL, make_url
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=(".env", "../.env"), extra="ignore")
 
     # Either a full DATABASE_URL (docker compose, tests) or separate DB_* parts (AWS Lambda,
     # where the password comes from Secrets Manager and may contain characters unsafe in a URL).
@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     # The pool's JWKS as JSON. Set on AWS, where the Lambda has no internet route to fetch it;
     # when empty it is downloaded from the issuer on first use.
     cognito_jwks: str = ""
+    # Bedrock AI settings
+    bedrock_region: str = "us-east-1"
+    bedrock_model_id: str = "us.amazon.nova-micro-v1:0"
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
+    aws_session_token: str | None = None
+    aws_region: str | None = None
 
     @property
     def sqlalchemy_url(self) -> URL:

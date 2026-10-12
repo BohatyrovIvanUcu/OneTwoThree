@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useCreateMeeting, useUpdateMeeting } from "@/hooks/useMeetings"
 import { ApiError } from "@/lib/api"
+import { Sparkles } from "lucide-react"
 import { toDateInput, toTimeInput } from "@/lib/calendar"
 import type { Meeting, MeetingCreate } from "@/types"
 
@@ -55,7 +56,7 @@ const meetingSchema = z
     },
   )
 
-type MeetingFormValues = z.infer<typeof meetingSchema>
+export type MeetingFormValues = z.infer<typeof meetingSchema>
 
 /** Defaults to the next full hour, one hour long, kept within the same day. */
 function emptyValues(start?: Date): MeetingFormValues {
@@ -107,6 +108,10 @@ interface MeetingFormDialogProps {
   initialStart?: Date
   /** Edits this meeting instead of creating a new one. */
   meeting?: Meeting | null
+  /** Prefills form from AI parsing. */
+  initialValues?: Partial<MeetingFormValues> | null
+  /** Optional callback to open the AI scheduling dialog. */
+  onOpenAiSchedule?: () => void
 }
 
 export function MeetingFormDialog({
@@ -114,18 +119,30 @@ export function MeetingFormDialog({
   onOpenChange,
   initialStart,
   meeting,
+  initialValues,
+  onOpenAiSchedule,
 }: MeetingFormDialogProps) {
   const createMeeting = useCreateMeeting()
   const updateMeeting = useUpdateMeeting()
   const saving = createMeeting.isPending || updateMeeting.isPending
   const form = useForm<MeetingFormValues>({
     resolver: zodResolver(meetingSchema),
-    defaultValues: meeting ? meetingValues(meeting) : emptyValues(initialStart),
+    defaultValues: meeting
+      ? meetingValues(meeting)
+      : { ...emptyValues(initialStart), ...initialValues },
   })
 
   useEffect(() => {
-    if (open) form.reset(meeting ? meetingValues(meeting) : emptyValues(initialStart))
-  }, [open, initialStart, meeting, form])
+    if (open) {
+      if (meeting) {
+        form.reset(meetingValues(meeting))
+      } else if (initialValues) {
+        form.reset({ ...emptyValues(initialStart), ...initialValues })
+      } else {
+        form.reset(emptyValues(initialStart))
+      }
+    }
+  }, [open, initialStart, meeting, initialValues, form])
 
   const onSubmit = async (values: MeetingFormValues) => {
     const data: MeetingCreate = {
@@ -164,7 +181,24 @@ export function MeetingFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{meeting ? "Edit meeting" : "New meeting"}</DialogTitle>
+          <div className="flex items-center justify-between pr-6">
+            <DialogTitle>{meeting ? "Edit meeting" : "New meeting"}</DialogTitle>
+            {!meeting && onOpenAiSchedule && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false)
+                  onOpenAiSchedule()
+                }}
+                className="h-7 cursor-pointer gap-1.5 rounded-lg border-indigo-400/35 bg-indigo-500/10 px-2.5 text-xs font-medium text-indigo-300 hover:bg-indigo-500/20 hover:text-white"
+              >
+                <Sparkles className="size-3.5 text-indigo-400" />
+                Fill with AI
+              </Button>
+            )}
+          </div>
           <DialogDescription>
             Add a call link, a place, or both so people know where to go.
           </DialogDescription>

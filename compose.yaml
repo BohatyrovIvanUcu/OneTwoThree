@@ -23,6 +23,11 @@ services:
       COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
       COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
       COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      BEDROCK_REGION: ${BEDROCK_REGION:-us-east-1}
+      BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-us.amazon.nova-micro-v1:0}
     command: sh -c "alembic upgrade head && python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     ports: ["${BACKEND_PORT:-8000}:8000"]
     depends_on:

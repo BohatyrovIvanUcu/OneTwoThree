@@ -44,6 +44,12 @@ Parameters:
     Type: Number
     Default: 7
 
+  # --- AI / Bedrock ---
+  BedrockModelId:
+    Type: String
+    Default: us.amazon.nova-micro-v1:0
+    Description: Default AWS Bedrock foundation model ID for AI scheduling.
+
   # --- Auth (from the Cognito stack; the Makefile passes them) ---
   CognitoUserPoolId:
     Type: String
@@ -248,6 +254,50 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: BedrockAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource: "*"
+
+  BedrockEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Bedrock VPC Endpoint
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref BackendSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-bedrock-endpoint-sg"
+        - Key: PROJECT_NAME
+          Value: !Ref ProjectName
+
+  BedrockVpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.bedrock-runtime"
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref BedrockEndpointSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-bedrock-endpoint"
+        - Key: PROJECT_NAME
+          Value: !Ref ProjectName
 
   BackendFunction:
     Type: AWS::Lambda::Function
@@ -285,6 +335,8 @@ Resources:
           COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
           COGNITO_CLIENT_ID: !Ref CognitoClientId
           COGNITO_JWKS: !Ref CognitoJwks
+          BEDROCK_REGION: !Ref AWS::Region
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
 
   # Public HTTPS endpoint of the function; this is the backend URL the frontend is built with.
   BackendFunctionUrl:

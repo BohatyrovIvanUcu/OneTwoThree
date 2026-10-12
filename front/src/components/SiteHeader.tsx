@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query"
-import { CalendarDays, LogOut, Plus } from "lucide-react"
+import { CalendarDays, LogOut, Plus, Sparkles } from "lucide-react"
 import { Link, useNavigate } from "react-router"
 
 import { useMe } from "@/hooks/useMe"
@@ -7,9 +7,10 @@ import { authConfig, authEnabled, logoutFromCognito, signOut } from "@/lib/auth"
 
 interface SiteHeaderProps {
   onNewMeeting: () => void
+  onAiSchedule?: () => void
 }
 
-export function SiteHeader({ onNewMeeting }: SiteHeaderProps) {
+export function SiteHeader({ onNewMeeting, onAiSchedule }: SiteHeaderProps) {
   const { data: me } = useMe()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -48,7 +49,18 @@ export function SiteHeader({ onNewMeeting }: SiteHeaderProps) {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {onAiSchedule && (
+            <button
+              type="button"
+              onClick={onAiSchedule}
+              className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-indigo-400/35 bg-indigo-500/15 px-3 py-2 text-sm font-medium text-indigo-200 shadow-[0_2px_10px_rgba(99,102,241,0.2)] backdrop-blur-md transition-all hover:border-indigo-400/60 hover:bg-indigo-500/25 hover:text-white active:scale-[0.98]"
+            >
+              <Sparkles className="size-4 text-indigo-300" />
+              <span className="hidden sm:inline">AI Schedule</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onNewMeeting}

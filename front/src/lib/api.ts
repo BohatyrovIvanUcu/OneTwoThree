@@ -1,5 +1,9 @@
 import { getIdToken, signOut } from "@/lib/auth"
 import type {
+  AiMeetingCreateRequest,
+  AiMeetingParseRequest,
+  AiMeetingParseResponse,
+  AiModel,
   Meeting,
   MeetingCreate,
   Participant,
@@ -79,4 +83,16 @@ export const api = {
     request<Participant[]>(`/participants${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   createParticipant: (data: ParticipantCreate) =>
     request<Participant>("/participants", { method: "POST", body: JSON.stringify(data) }),
+
+  getAiModels: () => request<AiModel[]>("/ai/models"),
+  parseMeetingWithAi: (data: AiMeetingParseRequest) =>
+    request<AiMeetingParseResponse>("/ai/parse-meeting", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  createMeetingWithAi: (data: AiMeetingCreateRequest) =>
+    request<Meeting>("/meetings/ai", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 }

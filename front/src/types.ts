@@ -44,3 +44,35 @@ export interface ValidationIssue {
   msg: string
   type: string
 }
+
+export interface AiModel {
+  id: string
+  name: string
+  description?: string | null
+  is_default: boolean
+}
+
+export interface AiMeetingParseRequest {
+  prompt: string
+  model_id?: string | null
+  current_time?: string | null
+}
+
+export interface AiMeetingParseResponse {
+  title: string
+  description: string | null
+  call_link: string | null
+  place: string | null
+  starts_at: string
+  ends_at: string
+  participant_ids: string[]
+  new_participants: ParticipantCreate[]
+  model_used: string
+}
+
+export interface AiMeetingCreateRequest {
+  prompt: string
+  model_id?: string | null
+  current_time?: string | null
+  auto_create_participants?: boolean
+}

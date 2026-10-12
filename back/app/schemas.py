@@ -100,3 +100,39 @@ class MeetingRead(BaseModel):
     owner_id: UUID | None
     participants: list[ParticipantRead]
     created_at: datetime
+
+
+class AiModelInfo(BaseModel):
+    id: str
+    name: str
+    description: str | None = None
+    is_default: bool = False
+
+
+class AiMeetingParseRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    prompt: str = Field(min_length=1, max_length=2000)
+    model_id: str | None = None
+    current_time: AwareDatetime | None = None
+
+
+class AiMeetingParseResponse(BaseModel):
+    title: str
+    description: str | None = None
+    call_link: str | None = None
+    place: str | None = None
+    starts_at: AwareDatetime
+    ends_at: AwareDatetime
+    participant_ids: list[UUID] = []
+    new_participants: list[ParticipantCreate] = []
+    model_used: str
+
+
+class AiMeetingCreateRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    prompt: str = Field(min_length=1, max_length=2000)
+    model_id: str | None = None
+    current_time: AwareDatetime | None = None
+    auto_create_participants: bool = True
