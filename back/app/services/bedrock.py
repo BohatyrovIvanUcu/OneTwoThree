@@ -59,9 +59,7 @@ def list_ai_models() -> list[AiModelInfo]:
 
 
 def get_bedrock_client():
-    kwargs: dict[str, Any] = {
-        "region_name": settings.bedrock_region or settings.aws_region or "us-east-1"
-    }
+    kwargs: dict[str, Any] = {"region_name": settings.bedrock_region or settings.aws_region or "us-east-1"}
     if settings.aws_access_key_id and settings.aws_secret_access_key:
         kwargs["aws_access_key_id"] = settings.aws_access_key_id
         kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
@@ -116,8 +114,7 @@ def parse_meeting_with_bedrock(
     participants_desc = "None"
     if existing_participants:
         participants_desc = "\n".join(
-            f'  - id: "{p.id}", name: "{p.name}", email: "{p.email}"'
-            for p in existing_participants
+            f'  - id: "{p.id}", name: "{p.name}", email: "{p.email}"' for p in existing_participants
         )
 
     system_prompt = f"""You are an intelligent scheduling assistant for a calendar application.

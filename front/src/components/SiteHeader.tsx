@@ -1,8 +1,10 @@
+import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { CalendarDays, LogOut, Plus, Sparkles } from "lucide-react"
+import { CalendarDays, FileText, Loader2, LogOut, Plus, Sparkles } from "lucide-react"
 import { Link, useNavigate } from "react-router"
 
 import { useMe } from "@/hooks/useMe"
+import { api } from "@/lib/api"
 import { authConfig, authEnabled, logoutFromCognito, signOut } from "@/lib/auth"
 
 interface SiteHeaderProps {
@@ -14,6 +16,7 @@ export function SiteHeader({ onNewMeeting, onAiSchedule }: SiteHeaderProps) {
   const { data: me } = useMe()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const [requestingReport, setRequestingReport] = useState(false)
 
   const handleSignOut = () => {
     signOut()
@@ -21,6 +24,19 @@ export function SiteHeader({ onNewMeeting, onAiSchedule }: SiteHeaderProps) {
     navigate("/", { replace: true })
     if (authEnabled() && authConfig().domain) {
       logoutFromCognito()
+    }
+  }
+
+  const handleRequestReport = async () => {
+    try {
+      setRequestingReport(true)
+      const res = await api.requestWeeklyReport()
+      alert(res.message || "Weekly report requested! It will be sent to your email shortly.")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to request report."
+      alert(msg)
+    } finally {
+      setRequestingReport(false)
     }
   }
 
@@ -50,6 +66,21 @@ export function SiteHeader({ onNewMeeting, onAiSchedule }: SiteHeaderProps) {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={handleRequestReport}
+            disabled={requestingReport}
+            title="Send me this week's report (Lab 5)"
+            className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-emerald-400/35 bg-emerald-500/15 px-3 py-2 text-sm font-medium text-emerald-200 shadow-[0_2px_10px_rgba(16,185,129,0.2)] backdrop-blur-md transition-all hover:border-emerald-400/60 hover:bg-emerald-500/25 hover:text-white active:scale-[0.98] disabled:opacity-50"
+          >
+            {requestingReport ? (
+              <Loader2 className="size-4 animate-spin text-emerald-300" />
+            ) : (
+              <FileText className="size-4 text-emerald-300" />
+            )}
+            <span className="hidden sm:inline">Send report</span>
+          </button>
+
           {onAiSchedule && (
             <button
               type="button"
@@ -73,11 +104,11 @@ export function SiteHeader({ onNewMeeting, onAiSchedule }: SiteHeaderProps) {
 
           {me && (
             <div className="flex flex-col items-end rounded-xl border border-white/10 bg-white/[0.06] px-3 py-1 text-xs font-medium text-slate-300 backdrop-blur-sm">
-              <span className="font-semibold text-white truncate max-w-[190px]" title={me.email}>
+              <span className="max-w-[190px] truncate font-semibold text-white" title={me.email}>
                 {me.email}
               </span>
               {me.name && me.name !== me.email && (
-                <span className="hidden sm:inline text-[10px] text-slate-400 truncate max-w-[160px]">
+                <span className="hidden max-w-[160px] truncate text-[10px] text-slate-400 sm:inline">
                   {me.name}
                 </span>
               )}

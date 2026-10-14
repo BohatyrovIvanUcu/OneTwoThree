@@ -58,10 +58,7 @@ export function HomePage() {
       <div className="pointer-events-none fixed top-1/3 -right-48 size-[500px] rounded-full bg-purple-500/18 blur-[130px]" />
       <div className="pointer-events-none fixed bottom-10 left-1/3 size-[400px] rounded-full bg-sky-500/15 blur-[120px]" />
 
-      <SiteHeader
-        onNewMeeting={() => openForm()}
-        onAiSchedule={() => setAiDialogOpen(true)}
-      />
+      <SiteHeader onNewMeeting={() => openForm()} onAiSchedule={() => setAiDialogOpen(true)} />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
         <section className="relative rounded-3xl border border-white/15 bg-white/[0.04] p-4 shadow-[0_16px_48px_0_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.18)] backdrop-blur-2xl transition-all sm:p-6">

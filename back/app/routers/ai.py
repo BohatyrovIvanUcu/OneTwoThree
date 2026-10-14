@@ -73,9 +73,7 @@ def parse_meeting_from_prompt(
     for np in raw_new_p:
         if isinstance(np, dict) and np.get("name") and np.get("email"):
             try:
-                new_participants.append(
-                    ParticipantCreate(name=str(np["name"]), email=str(np["email"]))
-                )
+                new_participants.append(ParticipantCreate(name=str(np["name"]), email=str(np["email"])))
             except Exception:
                 continue
 
@@ -127,9 +125,7 @@ def create_meeting_with_ai(
             if isinstance(np, dict) and np.get("name") and np.get("email"):
                 name = str(np["name"]).strip()
                 email = str(np["email"]).strip().lower()
-                existing = db.scalar(
-                    select(Participant).where(Participant.email == email)
-                )
+                existing = db.scalar(select(Participant).where(Participant.email == email))
                 if existing:
                     if existing.id not in participant_ids:
                         participant_ids.append(existing.id)

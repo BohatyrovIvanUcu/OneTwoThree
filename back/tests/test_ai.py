@@ -29,9 +29,7 @@ def test_parse_meeting_with_mock_bedrock(client: TestClient):
     }"""
 
     mock_client = MagicMock()
-    mock_client.converse.return_value = {
-        "output": {"message": {"content": [{"text": mock_llm_json}]}}
-    }
+    mock_client.converse.return_value = {"output": {"message": {"content": [{"text": mock_llm_json}]}}}
 
     with patch("app.services.bedrock.get_bedrock_client", return_value=mock_client):
         response = client.post(
@@ -75,17 +73,13 @@ def test_create_meeting_with_ai(client: TestClient):
     mock_llm_json = mock_llm_json.replace(existing_participant_id, real_pid)
 
     mock_client = MagicMock()
-    mock_client.converse.return_value = {
-        "output": {"message": {"content": [{"text": mock_llm_json}]}}
-    }
+    mock_client.converse.return_value = {"output": {"message": {"content": [{"text": mock_llm_json}]}}}
 
     with patch("app.services.bedrock.get_bedrock_client", return_value=mock_client):
         response = client.post(
             "/api/meetings/ai",
             json={
-                "prompt": (
-                    "Architecture sync in Room A with Existing Person and Diana diana@example.com"
-                ),
+                "prompt": ("Architecture sync in Room A with Existing Person and Diana diana@example.com"),
                 "auto_create_participants": True,
             },
         )

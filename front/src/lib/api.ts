@@ -95,4 +95,12 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  requestWeeklyReport: (week?: string) =>
+    request<{ status: string; request_id: string; week: string; message: string }>(
+      "/reports/request",
+      {
+        method: "POST",
+        body: JSON.stringify({ week: week ?? null }),
+      },
+    ),
 }

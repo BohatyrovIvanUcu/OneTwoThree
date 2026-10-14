@@ -30,6 +30,10 @@ BACKEND_ECR_STACK := $(PROJECT)-backend-ecr
 BACKEND_STACK     := $(PROJECT)-backend
 BACKEND_FUNCTION  := $(PROJECT)-backend
 BACKEND_PARAMS    := infra/backend.params.env
+REPORTS_STACK     := $(PROJECT)-reports
+REPORTS_TEMPLATE  := infra/reports.yaml
+REPORT_SENDER     ?= bohatyrov.pn@ucu.edu.ua
+REPORT_RECIPIENT  ?= bohatyrov.pn@ucu.edu.ua
 FRONTEND_STACK    := $(PROJECT)-frontend
 COGNITO_STACK     := $(PROJECT)-cognito
 # Every resource gets this tag (in the templates and as a stack tag).
@@ -53,7 +57,7 @@ COMMA       := ,
 LOAD_ENV    := set -a; [ -f .env ] && . ./.env; set +a; export AWS_REGION=$(AWS_REGION) AWS_DEFAULT_REGION=$(AWS_REGION);
 AWS_SHELL   := $(LOAD_ENV) aws
 # Recursive (=) so they are looked up only when a recipe needs them, after the stacks exist.
-stack_output = $(shell $(AWS_SHELL) cloudformation describe-stacks --stack-name $(1) \
+stack_output = $(shell $(AWS_SHELL) cloudformation describe-stacks --region $(AWS_REGION) --stack-name $(1) \
                  --query "Stacks[0].Outputs[?OutputKey=='$(2)'].OutputValue" --output text 2>/dev/null)
 ECR_URI      = $(call stack_output,$(BACKEND_ECR_STACK),RepositoryUri)
 ECR_REGISTRY = $(firstword $(subst /, ,$(ECR_URI)))
@@ -61,6 +65,12 @@ BACKEND_PARAMS_ARGS = $(shell [ -f $(BACKEND_PARAMS) ] && grep -v -e '^[[:space:
 backend_output  = $(call stack_output,$(BACKEND_STACK),$(1))
 frontend_output = $(call stack_output,$(FRONTEND_STACK),$(1))
 cognito_output  = $(call stack_output,$(COGNITO_STACK),$(1))
+reports_output  = $(call stack_output,$(REPORTS_STACK),$(1))
+REPORTS_BUCKET  = $(call reports_output,ReportsBucketName)
+REPORT_QUEUE_URL = $(call reports_output,ReportRequestsQueueUrl)
+REPORT_DLQ_URL   = $(call reports_output,ReportRequestsDlqUrl)
+BUILDER_FUNCTION = $(call reports_output,ReportBuilderFunctionName)
+MAILER_FUNCTION  = $(call reports_output,ReportMailerFunctionName)
 API_URL          = $(call backend_output,ApiUrl)
 FRONTEND_ORIGINS = $(call frontend_output,SiteOrigins)
 CORS_ORIGINS_AWS = $(CORS_LOCAL)$(if $(FRONTEND_ORIGINS),$(COMMA)$(FRONTEND_ORIGINS))
@@ -356,13 +366,145 @@ aws-cognito-destroy: aws-check ## Delete the Cognito stack — ALL user accounts
 	aws cloudformation delete-stack --stack-name $(COGNITO_STACK)
 	aws cloudformation wait stack-delete-complete --stack-name $(COGNITO_STACK)
 
+##@ Lab 5: Weekly Reports (Event-Driven)
+
+.PHONY: aws-reports-deploy
+aws-reports-deploy: aws-check ## Deploy Lab 5 stack (S3 bucket, Gateway Endpoint, SQS+DLQ, Scheduler, Builder & Mailer Lambdas)
+	$(call clear_failed_stack,$(REPORTS_STACK))
+	@test -n "$(ECR_URI)" || { echo "ECR repository not found: run \`make aws-backend-ecr\` first"; exit 1; }
+	@image_uri="$(IMAGE)"; \
+	if [ -z "$$image_uri" ] || [ "$$image_uri" = "None" ]; then \
+	  image_uri="$(ECR_URI):latest"; \
+	fi; \
+	test -n "$$image_uri" && [ "$$image_uri" != "None" ] || { echo "Could not determine backend image URI. Specify IMAGE=<ecr-uri>"; exit 1; }; \
+	vpc_id="$(call backend_output,VpcId)"; \
+	rt_id="$(call backend_output,PrivateRouteTableId)"; \
+	sub1="$(call backend_output,PrivateSubnet1Id)"; \
+	sub2="$(call backend_output,PrivateSubnet2Id)"; \
+	sg_id="$(call backend_output,BackendSecurityGroupId)"; \
+	role_name="$(call backend_output,BackendRoleName)"; \
+	db_endpoint="$(call backend_output,DbEndpoint)"; \
+	db_secret="$(call backend_output,DbSecretArn)"; \
+	echo "Deploying reports stack with:"; \
+	echo "  Image:        $$image_uri"; \
+	echo "  VPC:          $$vpc_id"; \
+	echo "  RouteTable:   $$rt_id"; \
+	echo "  Subnet 1:     $$sub1"; \
+	echo "  Subnet 2:     $$sub2"; \
+	echo "  SecurityGrp:  $$sg_id"; \
+	echo "  BackendRole:  $$role_name"; \
+	echo "  DbEndpoint:   $$db_endpoint"; \
+	echo "  DbSecret:     $$db_secret"; \
+	[ -n "$$vpc_id" ] && [ -n "$$rt_id" ] && [ -n "$$sub1" ] && [ -n "$$sub2" ] && [ -n "$$sg_id" ] && [ -n "$$role_name" ] && [ -n "$$db_endpoint" ] && [ -n "$$db_secret" ] || { \
+	  echo "Error: Missing required backend outputs. Run \`make aws-backend-outputs\` to verify them."; exit 1; \
+	}; \
+	aws cloudformation deploy --stack-name $(REPORTS_STACK) --template-file $(REPORTS_TEMPLATE) \
+	  --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset --tags $(STACK_TAGS) \
+	  --parameter-overrides ProjectName=$(PROJECT) ImageUri="$$image_uri" Architecture=$(LAMBDA_ARCH) \
+	    VpcId="$$vpc_id" PrivateRouteTableId="$$rt_id" PrivateSubnet1Id="$$sub1" PrivateSubnet2Id="$$sub2" \
+	    BackendSecurityGroupId="$$sg_id" BackendRoleName="$$role_name" DbEndpoint="$$db_endpoint" \
+	    DbSecretArn="$$db_secret" SenderEmail="$(REPORT_SENDER)" RecipientEmail="$(REPORT_RECIPIENT)"
+
+.PHONY: aws-reports-events
+aws-reports-events: ## Show failure events for reports stack
+	@PAGER=cat aws cloudformation describe-stack-events --region $(AWS_REGION) --stack-name $(REPORTS_STACK) \
+	  --query "reverse(StackEvents[?ResourceStatus=='CREATE_FAILED' || ResourceStatus=='UPDATE_FAILED'].[LogicalResourceId,ResourceStatusReason])" --output table
+
+.PHONY: aws-ses-status
+aws-ses-status: ## Check SES verification status for recipient email
+	@aws ses get-identity-verification-attributes --region $(AWS_REGION) --identities $(REPORT_RECIPIENT)
+
+.PHONY: aws-ses-verify
+aws-ses-verify: ## Request SES verification email for recipient email
+	@aws ses verify-email-identity --region $(AWS_REGION) --email-address $(REPORT_RECIPIENT)
+
+.PHONY: report-now
+report-now: ## Send an on-demand weekly report request to SQS (usage: make report-now WEEK=2026-W39)
+	@queue_url="$(REPORT_QUEUE_URL)"; \
+	[ -n "$$queue_url" ] && [ "$$queue_url" != "None" ] || queue_url="$$(aws cloudformation describe-stacks --region $(AWS_REGION) --stack-name $(REPORTS_STACK) --query "Stacks[0].Outputs[?OutputKey=='ReportRequestsQueueUrl'].OutputValue" --output text 2>/dev/null)"; \
+	[ -n "$$queue_url" ] && [ "$$queue_url" != "None" ] || queue_url="https://sqs.$(AWS_REGION).amazonaws.com/388094503220/$(PROJECT)-report-requests"; \
+	target_week="$(or $(WEEK),$(shell date -d "last Monday" +%Y-W%V 2>/dev/null || date +%Y-W%V))"; \
+	echo "Sending on-demand report request for $$target_week to SQS ($$queue_url)..."; \
+	aws sqs send-message --region $(AWS_REGION) --queue-url "$$queue_url" --message-body "{\"week\": \"$$target_week\", \"source\": \"on-demand\"}" && \
+	echo "Message queued. Check CloudWatch logs (make aws-reports-logs) and your inbox ($(REPORT_RECIPIENT))."
+
+.PHONY: report-schedule-fast
+report-schedule-fast: ## Temporarily set EventBridge schedule to run every 2 minutes (for Lab 5 submission test)
+	@target="$$(aws scheduler get-schedule --region $(AWS_REGION) --name $(PROJECT)-weekly-report-schedule --query 'Target' --output json 2>/dev/null)"; \
+	[ -n "$$target" ] && [ "$$target" != "None" ] || { echo "Could not fetch existing schedule target. Ensure $(PROJECT)-reports stack is deployed."; exit 1; }; \
+	aws scheduler update-schedule --region $(AWS_REGION) \
+	  --name $(PROJECT)-weekly-report-schedule \
+	  --schedule-expression "rate(2 minutes)" \
+	  --flexible-time-window Mode=OFF \
+	  --target "$$target" && \
+	echo "Schedule set to rate(2 minutes). Wait 2 minutes for execution, then run \`make report-schedule-reset\`."
+
+.PHONY: report-schedule-reset
+report-schedule-reset: ## Reset EventBridge schedule back to Monday 07:00 Kyiv time
+	@target="$$(aws scheduler get-schedule --region $(AWS_REGION) --name $(PROJECT)-weekly-report-schedule --query 'Target' --output json 2>/dev/null)"; \
+	[ -n "$$target" ] && [ "$$target" != "None" ] || { echo "Could not fetch existing schedule target. Ensure $(PROJECT)-reports stack is deployed."; exit 1; }; \
+	aws scheduler update-schedule --region $(AWS_REGION) \
+	  --name $(PROJECT)-weekly-report-schedule \
+	  --schedule-expression "cron(0 7 ? * MON *)" \
+	  --schedule-expression-timezone "Europe/Kyiv" \
+	  --flexible-time-window Mode=OFF \
+	  --target "$$target" && \
+	echo "Schedule reset to cron(0 7 ? * MON *) (Europe/Kyiv)."
+
+.PHONY: aws-reports-outputs
+aws-reports-outputs: ## Show reports stack outputs (Bucket, SQS URL, DLQ URL, Function names)
+	@aws cloudformation describe-stacks --region $(AWS_REGION) --stack-name $(REPORTS_STACK) \
+	  --query "Stacks[0].Outputs[].[OutputKey, OutputValue]" --output table
+
+.PHONY: aws-reports-ls
+aws-reports-ls: ## List generated reports in S3 (Item 3 in Lab 5 submission)
+	@bucket="$(REPORTS_BUCKET)"; \
+	[ -n "$$bucket" ] && [ "$$bucket" != "None" ] || bucket="$$(aws cloudformation describe-stacks --region $(AWS_REGION) --stack-name $(REPORTS_STACK) --query "Stacks[0].Outputs[?OutputKey=='ReportsBucketName'].OutputValue" --output text 2>/dev/null)"; \
+	[ -n "$$bucket" ] && [ "$$bucket" != "None" ] || bucket="$(PROJECT)-reports-388094503220"; \
+	echo "Listing reports in s3://$$bucket/reports/ :"; \
+	aws s3 ls "s3://$$bucket/reports/" --region $(AWS_REGION) --recursive || echo "  (no reports found in bucket yet)"
+
+.PHONY: aws-reports-logs-builder
+aws-reports-logs-builder: ## Tail logs for report-builder Lambda
+	aws logs tail /aws/lambda/$(PROJECT)-report-builder --region $(AWS_REGION) --follow --since 30m
+
+.PHONY: aws-reports-logs-mailer
+aws-reports-logs-mailer: ## Tail logs for report-mailer Lambda
+	aws logs tail /aws/lambda/$(PROJECT)-report-mailer --region $(AWS_REGION) --follow --since 30m
+
+.PHONY: aws-reports-logs
+aws-reports-logs: ## Show recent trigger logs for both builder and mailer (Item 4 in Lab 5 submission)
+	@echo "=== Recent Report Builder Logs ==="
+	-@aws logs tail /aws/lambda/$(PROJECT)-report-builder --region $(AWS_REGION) --since 30m | grep -E "report-builder triggered" || true
+	@echo
+	@echo "=== Recent Report Mailer Logs ==="
+	-@aws logs tail /aws/lambda/$(PROJECT)-report-mailer --region $(AWS_REGION) --since 30m | grep -E "report-mailer triggered" || true
+
+.PHONY: aws-reports-dlq
+aws-reports-dlq: ## Inspect messages in Dead Letter Queue (DLQ)
+	@dlq_url="$(REPORT_DLQ_URL)"; \
+	[ -n "$$dlq_url" ] && [ "$$dlq_url" != "None" ] || dlq_url="$$(aws sqs get-queue-url --region $(AWS_REGION) --queue-name $(PROJECT)-report-requests-dlq --query QueueUrl --output text 2>/dev/null)"; \
+	[ -n "$$dlq_url" ] && [ "$$dlq_url" != "None" ] || dlq_url="https://sqs.$(AWS_REGION).amazonaws.com/388094503220/$(PROJECT)-report-requests-dlq"; \
+	aws sqs receive-message --region $(AWS_REGION) --queue-url "$$dlq_url" --max-number-of-messages 10
+
+.PHONY: aws-reports-destroy
+aws-reports-destroy: aws-check ## Delete reports stack and empty its S3 bucket
+	@bucket="$(REPORTS_BUCKET)"; \
+	if [ -n "$$bucket" ]; then \
+	  echo "Emptying S3 bucket $$bucket..."; \
+	  aws s3 rm "s3://$$bucket" --recursive 2>/dev/null || true; \
+	fi
+	aws cloudformation delete-stack --stack-name $(REPORTS_STACK)
+	aws cloudformation wait stack-delete-complete --stack-name $(REPORTS_STACK)
+	@echo "Reports stack deleted."
+
 ##@ AWS (all parts)
 
 .PHONY: aws-deploy
-aws-deploy: aws-cognito-deploy aws-backend-deploy aws-frontend-deploy ## Deploy everything: Cognito, backend, then the frontend built with their IDs and URL
+aws-deploy: aws-cognito-deploy aws-backend-deploy aws-reports-deploy aws-frontend-deploy ## Deploy everything: Cognito, backend, reports, then frontend
 
 .PHONY: aws-destroy
-aws-destroy: aws-frontend-destroy aws-backend-destroy aws-cognito-destroy ## Delete everything on AWS (each stack asks first)
+aws-destroy: aws-reports-destroy aws-frontend-destroy aws-backend-destroy aws-cognito-destroy ## Delete everything on AWS (each stack asks first)
 
 ##@ Help
 

@@ -52,8 +52,7 @@ export function AiMeetingDialog({
   const [selectedModel, setSelectedModel] = useState<string>("")
   const [preview, setPreview] = useState<AiMeetingParseResponse | null>(null)
 
-  const activeModel =
-    selectedModel || (models.find((m) => m.is_default) ?? models[0])?.id || ""
+  const activeModel = selectedModel || (models.find((m) => m.is_default) ?? models[0])?.id || ""
 
   const handleClose = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -141,7 +140,7 @@ export function AiMeetingDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto border-white/20 bg-slate-900/90 text-white backdrop-blur-2xl shadow-[0_16px_48px_0_rgba(0,0,0,0.5)]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto border-white/20 bg-slate-900/90 text-white shadow-[0_16px_48px_0_rgba(0,0,0,0.5)] backdrop-blur-2xl sm:max-w-xl">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <span className="flex size-9 items-center justify-center rounded-xl border border-indigo-400/40 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 text-indigo-300">
@@ -177,7 +176,7 @@ export function AiMeetingDialog({
                       key={m.id}
                       type="button"
                       onClick={() => setSelectedModel(m.id)}
-                      className={`flex flex-col items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      className={`flex cursor-pointer flex-col items-start rounded-xl border p-2.5 text-left transition-all ${
                         isSelected
                           ? "border-indigo-400/80 bg-indigo-500/20 shadow-[0_0_12px_rgba(99,102,241,0.25)]"
                           : "border-white/10 bg-white/[0.04] hover:border-white/25 hover:bg-white/[0.08]"
@@ -209,7 +208,7 @@ export function AiMeetingDialog({
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="e.g., Quick sync with Alice tomorrow at 3pm on Google Meet to review Q3 results"
               rows={3}
-              className="resize-none border-white/20 bg-black/25 text-white placeholder:text-slate-500 focus-visible:ring-indigo-500 rounded-xl"
+              className="resize-none rounded-xl border-white/20 bg-black/25 text-white placeholder:text-slate-500 focus-visible:ring-indigo-500"
             />
           </div>
 
@@ -222,7 +221,7 @@ export function AiMeetingDialog({
                   key={example}
                   type="button"
                   onClick={() => setPrompt(example)}
-                  className="rounded-lg border border-white/10 bg-white/[0.05] px-2 py-1 text-[11px] text-slate-300 transition-colors hover:border-indigo-400/40 hover:bg-indigo-500/15 cursor-pointer"
+                  className="cursor-pointer rounded-lg border border-white/10 bg-white/[0.05] px-2 py-1 text-[11px] text-slate-300 transition-colors hover:border-indigo-400/40 hover:bg-indigo-500/15"
                 >
                   {example}
                 </button>
@@ -232,7 +231,7 @@ export function AiMeetingDialog({
 
           {/* Parsed Preview Card */}
           {preview && (
-            <div className="rounded-2xl border border-indigo-400/30 bg-gradient-to-br from-indigo-950/40 to-slate-900/60 p-4 space-y-3 shadow-inner">
+            <div className="space-y-3 rounded-2xl border border-indigo-400/30 bg-gradient-to-br from-indigo-950/40 to-slate-900/60 p-4 shadow-inner">
               <div className="flex items-center justify-between border-b border-white/10 pb-2">
                 <div className="flex items-center gap-2">
                   <Check className="size-4 text-emerald-400" />
@@ -246,7 +245,7 @@ export function AiMeetingDialog({
                     variant="ghost"
                     size="sm"
                     onClick={handleEditInForm}
-                    className="h-6 text-xs text-indigo-300 hover:text-white hover:bg-indigo-500/20"
+                    className="h-6 text-xs text-indigo-300 hover:bg-indigo-500/20 hover:text-white"
                   >
                     Edit in form →
                   </Button>
@@ -295,7 +294,7 @@ export function AiMeetingDialog({
                           href={preview.call_link}
                           target="_blank"
                           rel="noreferrer"
-                          className="truncate max-w-[200px] text-indigo-300 underline hover:text-indigo-200"
+                          className="max-w-[200px] truncate text-indigo-300 underline hover:text-indigo-200"
                         >
                           {preview.call_link}
                         </a>
@@ -305,14 +304,14 @@ export function AiMeetingDialog({
                 )}
 
                 {preview.description && (
-                  <div className="text-slate-300 text-[11px] bg-black/20 p-2 rounded-lg border border-white/5">
+                  <div className="rounded-lg border border-white/5 bg-black/20 p-2 text-[11px] text-slate-300">
                     {preview.description}
                   </div>
                 )}
 
                 {(preview.participant_ids.length > 0 || preview.new_participants.length > 0) && (
                   <div className="flex items-start gap-1.5 text-slate-300">
-                    <Users className="size-3.5 text-indigo-400 mt-0.5" />
+                    <Users className="mt-0.5 size-3.5 text-indigo-400" />
                     <div className="flex flex-wrap gap-1">
                       {preview.participant_ids.map((id) => {
                         const p = allParticipants.find((x) => x.id === id)
@@ -328,7 +327,7 @@ export function AiMeetingDialog({
                       {preview.new_participants.map((np) => (
                         <span
                           key={np.email}
-                          className="rounded-md bg-indigo-500/30 border border-indigo-400/40 px-1.5 py-0.5 text-[10px] text-indigo-200"
+                          className="rounded-md border border-indigo-400/40 bg-indigo-500/30 px-1.5 py-0.5 text-[10px] text-indigo-200"
                         >
                           + {np.name} ({np.email})
                         </span>
@@ -341,7 +340,7 @@ export function AiMeetingDialog({
           )}
         </div>
 
-        <DialogFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between pt-2 border-t border-white/10">
+        <DialogFooter className="flex flex-col-reverse gap-2 border-t border-white/10 pt-2 sm:flex-row sm:justify-between">
           <Button
             type="button"
             variant="ghost"
@@ -360,7 +359,7 @@ export function AiMeetingDialog({
                   variant="outline"
                   onClick={handleParse}
                   disabled={isWorking || !prompt.trim()}
-                  className="border-white/20 bg-white/5 hover:bg-white/10 text-white cursor-pointer"
+                  className="cursor-pointer border-white/20 bg-white/5 text-white hover:bg-white/10"
                 >
                   {parseAi.isPending ? (
                     <>
@@ -375,7 +374,7 @@ export function AiMeetingDialog({
                   type="button"
                   onClick={handleDirectCreate}
                   disabled={isWorking || !prompt.trim()}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-md cursor-pointer"
+                  className="cursor-pointer bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md hover:from-indigo-600 hover:to-purple-700"
                 >
                   {createAi.isPending ? (
                     <>
@@ -395,7 +394,7 @@ export function AiMeetingDialog({
                 type="button"
                 onClick={handleConfirmPreview}
                 disabled={isWorking}
-                className="bg-gradient-to-r from-emerald-500 to-indigo-600 hover:from-emerald-600 hover:to-indigo-700 text-white shadow-md cursor-pointer"
+                className="cursor-pointer bg-gradient-to-r from-emerald-500 to-indigo-600 text-white shadow-md hover:from-emerald-600 hover:to-indigo-700"
               >
                 {createAi.isPending ? (
                   <>

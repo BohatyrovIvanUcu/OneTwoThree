@@ -136,3 +136,16 @@ class AiMeetingCreateRequest(BaseModel):
     model_id: str | None = None
     current_time: AwareDatetime | None = None
     auto_create_participants: bool = True
+
+
+class ReportRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    week: str | None = None
+
+
+class ReportRequestResponse(BaseModel):
+    status: str
+    request_id: str
+    week: str
+    message: str

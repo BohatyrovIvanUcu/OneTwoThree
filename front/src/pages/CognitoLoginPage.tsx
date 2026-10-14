@@ -12,7 +12,7 @@ export function CognitoLoginPage() {
   }, [])
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="flex items-center gap-3 text-lg font-medium text-muted-foreground">
         <LoaderCircle className="size-6 animate-spin text-primary" />
         Redirecting to Cognito sign-in…
