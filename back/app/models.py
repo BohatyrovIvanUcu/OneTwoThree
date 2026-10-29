@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Index, String, Table, Text, Uuid, func, text
+from sqlalchemy import Column, DateTime, ForeignKey, Index, JSON, String, Table, Text, Uuid, func, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -48,6 +49,10 @@ class Meeting(Base):
     # before accounts existed; nobody sees those.
     owner_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    agenda: Mapped[dict | None] = mapped_column(JSON().with_variant(JSONB(), "postgresql"), nullable=True)
+    ai_suggestion: Mapped[dict | None] = mapped_column(
+        JSON().with_variant(JSONB(), "postgresql"), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

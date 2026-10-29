@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user
 from app.db import get_db
 from app.models import User
-from app.schemas import AiMeetingCreateRequest, MeetingCreate, MeetingRead
+from app.schemas import (
+    AiMeetingCreateRequest,
+    MeetingAgendaResponse,
+    MeetingAgendaSaveRequest,
+    MeetingCreate,
+    MeetingRead,
+)
 from app.services import meetings as service
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
@@ -54,3 +60,39 @@ def update_meeting(
 def delete_meeting(meeting_id: UUID, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     service.delete_meeting(db, meeting_id, user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/{meeting_id}/agenda", response_model=MeetingAgendaResponse)
+def save_meeting_agenda(
+    meeting_id: UUID,
+    request: MeetingAgendaSaveRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    meeting = service.save_agenda(
+        db,
+        meeting_id,
+        agenda_data=request.agenda.model_dump(mode="json"),
+        ai_suggestion=request.ai_suggestion,
+        user=user,
+    )
+    return MeetingAgendaResponse(
+        id=meeting.id,
+        agenda=meeting.agenda,
+        ai_suggestion=meeting.ai_suggestion,
+    )
+
+
+@router.get("/{meeting_id}/agenda", response_model=MeetingAgendaResponse)
+def get_meeting_agenda(
+    meeting_id: UUID,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    meeting = service.get_meeting(db, meeting_id, user)
+    return MeetingAgendaResponse(
+        id=meeting.id,
+        agenda=meeting.agenda,
+        ai_suggestion=meeting.ai_suggestion,
+    )
+

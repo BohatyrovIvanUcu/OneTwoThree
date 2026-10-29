@@ -99,6 +99,8 @@ class MeetingRead(BaseModel):
     ends_at: datetime
     owner_id: UUID | None
     participants: list[ParticipantRead]
+    agenda: dict | None = None
+    ai_suggestion: dict | None = None
     created_at: datetime
 
 
@@ -149,3 +151,36 @@ class ReportRequestResponse(BaseModel):
     request_id: str
     week: str
     message: str
+
+
+class AgendaItemSchema(BaseModel):
+    topic: str = Field(min_length=1)
+    owner: str | None = None
+    minutes: int | None = Field(default=None, ge=1, le=480)
+
+
+class ActionItemSchema(BaseModel):
+    task: str = Field(min_length=1)
+    owner: str | None = None
+    due: str | None = None
+
+
+class AgendaSavePayload(BaseModel):
+    title: str | None = None
+    starts_at: str | None = None
+    duration_minutes: int | None = None
+    items: list[AgendaItemSchema] = []
+    action_items: list[ActionItemSchema] = []
+    language: str | None = None
+
+
+class MeetingAgendaSaveRequest(BaseModel):
+    agenda: AgendaSavePayload
+    ai_suggestion: dict | None = None
+
+
+class MeetingAgendaResponse(BaseModel):
+    id: UUID
+    agenda: dict | None = None
+    ai_suggestion: dict | None = None
+

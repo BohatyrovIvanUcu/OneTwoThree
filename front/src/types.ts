@@ -10,6 +10,27 @@ export interface User {
   name: string | null
 }
 
+export interface AgendaItem {
+  topic: string
+  owner?: string | null
+  minutes?: number | null
+}
+
+export interface ActionItem {
+  task: string
+  owner?: string | null
+  due?: string | null
+}
+
+export interface ParsedAgenda {
+  title?: string | null
+  starts_at?: string | null
+  duration_minutes?: number | null
+  items: AgendaItem[]
+  action_items?: ActionItem[]
+  language?: string
+}
+
 export interface Meeting {
   id: string
   title: string
@@ -20,6 +41,8 @@ export interface Meeting {
   ends_at: string
   owner_id: string | null
   participants: Participant[]
+  agenda?: ParsedAgenda | null
+  ai_suggestion?: Record<string, unknown> | null
   created_at: string
 }
 

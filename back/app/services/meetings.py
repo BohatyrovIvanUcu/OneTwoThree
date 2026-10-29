@@ -74,3 +74,20 @@ def update_meeting(db: Session, meeting_id: UUID, data: MeetingCreate, user: Use
 def delete_meeting(db: Session, meeting_id: UUID, user: User) -> None:
     db.delete(get_meeting(db, meeting_id, user))
     db.commit()
+
+
+def save_agenda(
+    db: Session,
+    meeting_id: UUID,
+    agenda_data: dict,
+    ai_suggestion: dict | None,
+    user: User,
+) -> Meeting:
+    meeting = get_meeting(db, meeting_id, user)
+    meeting.agenda = agenda_data
+    if ai_suggestion is not None:
+        meeting.ai_suggestion = ai_suggestion
+    db.commit()
+    db.refresh(meeting)
+    return meeting
+

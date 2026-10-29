@@ -153,3 +153,51 @@ def create_meeting_with_ai(
         ) from err
 
     return meeting_service.create_meeting(db, meeting_data, user)
+
+
+@router.post("/parse-agenda")
+def parse_agenda_proxy(
+    request: dict,
+    _: User = Depends(get_current_user),
+):
+    """Local development proxy endpoint for testing agenda parsing via Bedrock."""
+    from datetime import date
+    from app.ai.agenda import (
+        PROMPT_VERSION,
+        AgendaParseError,
+        calculate_cost_usd,
+        parse_agenda,
+    )
+    from app.config import settings
+
+    text = request.get("text", "")
+    if not isinstance(text, str) or not text.strip():
+        raise HTTPException(status_code=400, detail="Field 'text' is required")
+    if len(text) > 10_000:
+        raise HTTPException(status_code=413, detail="Text exceeds maximum limit of 10,000 characters")
+
+    today_str = request.get("today")
+    try:
+        today = date.fromisoformat(today_str) if today_str else date.today()
+    except Exception:
+        today = date.today()
+
+    tz = request.get("tz") or "UTC"
+    model = request.get("model") or getattr(settings, "parser_model", "anthropic.claude-haiku-5-5")
+
+    try:
+        agenda, usage = parse_agenda(text, today, tz, model=model)
+    except AgendaParseError as err:
+        raise HTTPException(status_code=422, detail=str(err)) from err
+    except Exception as err:
+        raise HTTPException(status_code=500, detail=str(err)) from err
+
+    cost = calculate_cost_usd(model, usage)
+    return {
+        "agenda": agenda.model_dump(mode="json"),
+        "model": model,
+        "prompt_version": PROMPT_VERSION,
+        "usage": usage,
+        "cost_usd": cost,
+    }
+

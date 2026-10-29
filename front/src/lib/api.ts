@@ -6,6 +6,7 @@ import type {
   AiModel,
   Meeting,
   MeetingCreate,
+  ParsedAgenda,
   Participant,
   ParticipantCreate,
   User,
@@ -37,6 +38,7 @@ function messageFrom(detail: unknown, status: number): string {
 // Backend origin, set at build time (the Lambda function URL on AWS). Empty = same origin,
 // where nginx (Docker Compose) or the Vite dev server proxies /api to the backend.
 const API_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "")
+const AI_URL = (import.meta.env.VITE_AI_URL ?? "").replace(/\/+$/, "")
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = await getIdToken()
@@ -102,5 +104,68 @@ export const api = {
         method: "POST",
         body: JSON.stringify({ week: week ?? null }),
       },
+    ),
+
+  parseAgenda: async ({
+    text,
+    today,
+    tz,
+    model,
+    signal,
+  }: {
+    text: string
+    today: string
+    tz: string
+    model?: string
+    signal?: AbortSignal
+  }): Promise<{
+    agenda: ParsedAgenda
+    model: string
+    prompt_version: string
+    usage?: { input_tokens: number; output_tokens: number }
+    latency_ms?: number
+    cost_usd?: number
+  }> => {
+    const token = await getIdToken()
+    const targetUrl = AI_URL ? `${AI_URL}` : `${API_URL}/api/ai/parse-agenda`
+    const response = await fetch(targetUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ text, today, tz, model }),
+      signal,
+    })
+
+    if (!response.ok) {
+      let errMsg = `Parser failed (${response.status})`
+      try {
+        const errJson = await response.json()
+        errMsg = errJson.error || errJson.detail || errMsg
+      } catch {
+        // ignore
+      }
+      throw new ApiError(errMsg, response.status, null)
+    }
+
+    return response.json()
+  },
+
+  saveMeetingAgenda: (
+    meetingId: string,
+    data: { agenda: ParsedAgenda; ai_suggestion?: Record<string, unknown> | null },
+  ) =>
+    request<{ id: string; agenda: ParsedAgenda; ai_suggestion?: Record<string, unknown> | null }>(
+      `/meetings/${meetingId}/agenda`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    ),
+
+  getMeetingAgenda: (meetingId: string) =>
+    request<{ id: string; agenda: ParsedAgenda | null; ai_suggestion?: Record<string, unknown> | null }>(
+      `/meetings/${meetingId}/agenda`,
     ),
 }

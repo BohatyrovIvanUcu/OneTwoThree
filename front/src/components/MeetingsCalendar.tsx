@@ -6,6 +6,7 @@ import {
   ExternalLink,
   MapPin,
   Pencil,
+  Sparkles,
   Trash2,
   Users,
 } from "lucide-react"
@@ -58,9 +59,10 @@ function useNow(): Date {
 interface MeetingActions {
   onEdit: (meeting: Meeting) => void
   onDelete: (meeting: Meeting) => void
+  onAgenda?: (meeting: Meeting) => void
 }
 
-function MeetingDetails({ meeting, onEdit, onDelete }: { meeting: Meeting } & MeetingActions) {
+function MeetingDetails({ meeting, onEdit, onDelete, onAgenda }: { meeting: Meeting } & MeetingActions) {
   const start = new Date(meeting.starts_at)
   return (
     <div className="space-y-3.5 text-sm">
@@ -69,6 +71,18 @@ function MeetingDetails({ meeting, onEdit, onDelete }: { meeting: Meeting } & Me
           {meeting.title}
         </h4>
         <div className="-mt-1 -mr-2 flex shrink-0 gap-1">
+          {onAgenda && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={`Agenda for ${meeting.title}`}
+              onClick={() => onAgenda(meeting)}
+              className="size-8 rounded-lg text-purple-300 hover:bg-purple-500/20"
+              title="Meeting Agenda"
+            >
+              <Sparkles className="size-3.5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -125,11 +139,51 @@ function MeetingDetails({ meeting, onEdit, onDelete }: { meeting: Meeting } & Me
           </div>
         </div>
       )}
+      {meeting.agenda?.items && meeting.agenda.items.length > 0 ? (
+        <div className="rounded-xl border border-purple-500/25 bg-purple-500/10 p-2.5 text-xs text-purple-200">
+          <div className="flex items-center justify-between font-semibold">
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="size-3 text-purple-300" />
+              Agenda ({meeting.agenda.items.length} topics)
+            </span>
+            {onAgenda && (
+              <button
+                type="button"
+                onClick={() => onAgenda(meeting)}
+                className="text-[11px] underline hover:text-white"
+              >
+                Open / Edit
+              </button>
+            )}
+          </div>
+          <ul className="mt-1 list-inside list-disc space-y-0.5 text-[11px] text-slate-300">
+            {meeting.agenda.items.slice(0, 3).map((it, idx) => (
+              <li key={idx} className="truncate">
+                {it.topic} {it.owner ? `(${it.owner})` : ""}
+              </li>
+            ))}
+            {meeting.agenda.items.length > 3 && (
+              <li className="text-slate-400">+{meeting.agenda.items.length - 3} more...</li>
+            )}
+          </ul>
+        </div>
+      ) : onAgenda ? (
+        <div className="pt-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onAgenda(meeting)}
+            className="w-full border-purple-400/30 bg-purple-500/10 text-xs text-purple-200 hover:bg-purple-500/20 hover:text-white"
+          >
+            <Sparkles className="mr-1.5 size-3.5 text-purple-300" /> Paste / Add Agenda
+          </Button>
+        </div>
+      ) : null}
     </div>
   )
 }
 
-function MeetingBlock({ segment, onEdit, onDelete }: { segment: DaySegment } & MeetingActions) {
+function MeetingBlock({ segment, onEdit, onDelete, onAgenda }: { segment: DaySegment } & MeetingActions) {
   const [open, setOpen] = useState(false)
   const { meeting, startMin, endMin, column, columns } = segment
   // Close the details before handing over to the edit or delete dialog.
@@ -180,6 +234,7 @@ function MeetingBlock({ segment, onEdit, onDelete }: { segment: DaySegment } & M
           meeting={meeting}
           onEdit={closeThen(onEdit)}
           onDelete={closeThen(onDelete)}
+          onAgenda={onAgenda ? closeThen(onAgenda) : undefined}
         />
       </PopoverContent>
     </Popover>
@@ -196,6 +251,7 @@ export function MeetingsCalendar({
   meetings,
   onEdit,
   onDelete,
+  onAgenda,
   onCreateAt,
 }: MeetingsCalendarProps) {
   const [view, setView] = useState<CalendarView>(initialView)
@@ -363,6 +419,7 @@ export function MeetingsCalendar({
                       segment={segment}
                       onEdit={onEdit}
                       onDelete={onDelete}
+                      onAgenda={onAgenda}
                     />
                   ))}
 

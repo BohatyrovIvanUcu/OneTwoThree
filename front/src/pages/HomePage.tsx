@@ -3,6 +3,7 @@ import { toast } from "sonner"
 
 import { BackToTop } from "@/components/BackToTop"
 import { DeleteMeetingDialog } from "@/components/DeleteMeetingDialog"
+import { MeetingAgendaDialog } from "@/components/MeetingAgendaDialog"
 import { MeetingFormDialog, type MeetingFormValues } from "@/components/MeetingFormDialog"
 import { AiMeetingDialog } from "@/components/AiMeetingDialog"
 import { MeetingsCalendar } from "@/components/MeetingsCalendar"
@@ -22,6 +23,8 @@ export function HomePage() {
   const [pendingDelete, setPendingDelete] = useState<Meeting | null>(null)
   const [aiDialogOpen, setAiDialogOpen] = useState(false)
   const [parsedFormValues, setParsedFormValues] = useState<Partial<MeetingFormValues> | null>(null)
+  const [agendaMeeting, setAgendaMeeting] = useState<Meeting | null>(null)
+  const [agendaOpen, setAgendaOpen] = useState(false)
 
   const openForm = (start?: Date) => {
     setEditing(null)
@@ -34,6 +37,11 @@ export function HomePage() {
     setEditing(meeting)
     setParsedFormValues(null)
     setFormOpen(true)
+  }
+
+  const openAgenda = (meeting: Meeting) => {
+    setAgendaMeeting(meeting)
+    setAgendaOpen(true)
   }
 
   const handleOpenWithParsed = (parsed: Partial<MeetingFormValues>) => {
@@ -90,6 +98,7 @@ export function HomePage() {
               meetings={meetings}
               onEdit={openEdit}
               onDelete={setPendingDelete}
+              onAgenda={openAgenda}
               onCreateAt={openForm}
             />
           )}
@@ -106,6 +115,11 @@ export function HomePage() {
         meeting={editing}
         initialValues={parsedFormValues}
         onOpenAiSchedule={() => setAiDialogOpen(true)}
+      />
+      <MeetingAgendaDialog
+        meeting={agendaMeeting}
+        open={agendaOpen}
+        onOpenChange={setAgendaOpen}
       />
       <AiMeetingDialog
         open={aiDialogOpen}
