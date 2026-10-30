@@ -82,9 +82,9 @@ def calculate_cost_usd(model_id: str, usage: dict[str, int]) -> float:
     return round(cost, 7)
 
 
-def get_bedrock_mantle_client():
-    """Lazily instantiate AnthropicBedrockMantle with configured AWS credentials."""
-    from anthropic import AnthropicBedrockMantle
+def get_bedrock_client():
+    """Lazily instantiate AnthropicBedrock (standard Bedrock runtime) with configured AWS credentials."""
+    from anthropic import AnthropicBedrock
 
     region = (
         getattr(settings, "bedrock_region", None)
@@ -100,7 +100,12 @@ def get_bedrock_mantle_client():
     if getattr(settings, "aws_session_token", None):
         kwargs["aws_session_token"] = settings.aws_session_token
 
-    return AnthropicBedrockMantle(**kwargs)
+    return AnthropicBedrock(**kwargs)
+
+
+def get_bedrock_mantle_client():
+    """Alias for compatibility."""
+    return get_bedrock_client()
 
 
 def _parse_agenda_converse(
@@ -132,6 +137,8 @@ def _parse_agenda_converse(
     converse_model = model_name
     if converse_model.startswith("anthropic.claude"):
         converse_model = f"us.{converse_model}"
+    if converse_model == "us.anthropic.claude-haiku-4-5":
+        converse_model = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 
     tool_config = {
         "tools": [
@@ -243,18 +250,23 @@ def parse_agenda(
 
     usage: dict[str, int] = {"input_tokens": 0, "output_tokens": 0}
 
+    bedrock_model = model_name
+    if bedrock_model.startswith("anthropic.claude"):
+        bedrock_model = f"us.{bedrock_model}"
+    if bedrock_model == "us.anthropic.claude-haiku-4-5":
+        bedrock_model = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+
     for attempt in range(2):
         logger.info(
             "Invoking model %s (attempt %d/2) for %d characters...",
-            model_name,
+            bedrock_model,
             attempt + 1,
             len(text),
         )
 
         msg = client.messages.create(
-            model=model_name,
+            model=bedrock_model,
             max_tokens=4096,
-            output_config={"effort": "low"},
             system=SYSTEM,
             tools=[RECORD_AGENDA],
             messages=messages,

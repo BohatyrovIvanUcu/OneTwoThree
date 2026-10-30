@@ -210,3 +210,86 @@ make aws-frontend-https-check # 3. curl https://onetwothree.dobosevych.com/
 **Cost.** There is no load balancer, NAT gateway or public IPv4 address. Lambda and function URLs fit in the always-free tier for a small app. CloudFront runs on the flat-rate Free plan, which costs $0 with no overage charges and also covers its WAF web ACL (a per-IP rate limit). Requests that WAF blocks don't count toward the plan's allowance. Aurora Serverless v2 has no free tier. With `DbMinCapacity=0` it pauses after 5 idle minutes, and then you pay only for storage (about $0.10/GB-month). While active it costs about $0.12 per ACU-hour. The first request after a pause waits about 15 seconds while Aurora resumes. The DB credentials secret costs $0.40/month. Run `make aws-destroy` when you are done. It keeps a final Aurora snapshot.
 
 On AWS the backend reads `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` instead of `DATABASE_URL`. The password is generated in Secrets Manager and resolved into the function's environment at deploy time, so the VPC needs no internet access. `DB_NULL_POOL=true` closes connections after each request, because idle connections from warm Lambdas would stop Aurora from pausing. Migrations do not run on cold start. `make aws-backend-migrate` runs them, and every `aws-backend-deploy` calls it.
+
+## Infrastructure as Code (Terraform & HCP Terraform)
+
+The infrastructure previously defined in CloudFormation (, , ) has been migrated to Terraform managed via **HCP Terraform**:
+- **HCP Organization:** 
+- **Workspace:**  (Remote execution via AWS IAM OIDC dynamic credentials)
+- **Files:** Located in  (, , , , , ).
+- **Plan check:** [0m[33mRunning plan in HCP Terraform. Output will stream here. Pressing Ctrl-C
+will stop streaming the logs, but will not stop the plan running remotely.[0m
+
+Preparing the remote plan...
+[0m
+The remote workspace is configured to work with configuration at
+infra relative to the target repository.
+
+Terraform will upload the contents of the following directory,
+excluding files or directories as defined by a .terraformignore file
+at /home/ivan/67_ooad/OneTwoThree/.terraformignore (if it is present),
+in order to capture the filesystem context the remote workspace expects:
+    /home/ivan/67_ooad/OneTwoThree
+
+[0m[33mTo view this run in a browser, visit:[0m
+[0m[33mhttps://app.terraform.io/app/123boh/meetings-dev/runs/run-1Wj2KELstNBMsadh[0m
+[0m
+Waiting for the plan to start...
+
+Terraform v1.17.1
+on linux_amd64
+
+Initializing plugins and modules...
+[1mdata.archive_file.report_mailer_zip: Refreshing...[0m[0m
+[1mdata.archive_file.report_mailer_zip: Refresh complete after 0s [id=e9431a172793c50d2cb12e3719b0ce498f199229][0m[0m
+[1mdata.aws_caller_identity.current: Refreshing...[0m[0m
+[1maws_vpc_endpoint.s3_gateway: Refreshing state... [id=vpce-09859ebaf15676e1d][0m[0m
+[1maws_cloudwatch_log_group.agenda_parser: Refreshing state... [id=/aws/lambda/meetings-agenda-parser][0m[0m
+[1maws_sqs_queue.report_requests_dlq: Refreshing state... [id=https://sqs.us-east-1.amazonaws.com/388094503220/meetings-report-requests-dlq][0m[0m
+[1maws_cloudwatch_log_group.report_mailer: Refreshing state... [id=/aws/lambda/meetings-report-mailer][0m[0m
+[1maws_iam_role.report_mailer: Refreshing state... [id=meetings-report-mailer-role][0m[0m
+[1maws_iam_role.scheduler: Refreshing state... [id=meetings-scheduler-sqs-role][0m[0m
+[1maws_cloudwatch_log_group.report_builder: Refreshing state... [id=/aws/lambda/meetings-report-builder][0m[0m
+[1maws_cognito_user_pool.main: Refreshing state... [id=us-east-1_HWNGYOPFG][0m[0m
+[1maws_iam_role.agenda_parser: Refreshing state... [id=meetings-agenda-parser-role][0m[0m
+[1mdata.aws_caller_identity.current: Refresh complete after 0s [id=388094503220][0m[0m
+[1mdata.aws_secretsmanager_secret_version.db: Refreshing...[0m[0m
+[1mdata.aws_secretsmanager_secret_version.db: Refresh complete after 0s [id=arn:aws:secretsmanager:us-east-1:388094503220:secret:DbSecret-TvzLywgjtefB-Am0ES9|AWSCURRENT][0m[0m
+[1maws_iam_role_policy.backend_s3_requests: Refreshing state... [id=meetings-backend-BackendRole-1Z1k8Crn4UlJ:meetings-backend-s3-requests][0m[0m
+[1maws_s3_bucket.reports: Refreshing state... [id=meetings-reports-388094503220][0m[0m
+[1maws_iam_role.report_builder: Refreshing state... [id=meetings-report-builder-role][0m[0m
+[1maws_sqs_queue.report_requests: Refreshing state... [id=https://sqs.us-east-1.amazonaws.com/388094503220/meetings-report-requests][0m[0m
+[1maws_iam_role_policy_attachment.report_mailer_basic: Refreshing state... [id=meetings-report-mailer-role/arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole][0m[0m
+[1maws_iam_role_policy.report_mailer_s3_ses_sqs: Refreshing state... [id=meetings-report-mailer-role:S3AndSesAndSqsPolicy][0m[0m
+[1maws_lambda_function.report_mailer: Refreshing state... [id=meetings-report-mailer][0m[0m
+[1maws_iam_role_policy_attachment.agenda_parser_basic: Refreshing state... [id=meetings-agenda-parser-role/arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole][0m[0m
+[1maws_iam_role_policy.agenda_parser_bedrock: Refreshing state... [id=meetings-agenda-parser-role:BedrockInferenceAccess][0m[0m
+[1maws_iam_role_policy.scheduler_sqs: Refreshing state... [id=meetings-scheduler-sqs-role:SqsSendMessage][0m[0m
+[1maws_scheduler_schedule.report_schedule: Refreshing state... [id=default/meetings-weekly-report-schedule][0m[0m
+[1maws_cognito_identity_provider.google[0]: Refreshing state... [id=us-east-1_HWNGYOPFG:Google][0m[0m
+[1maws_cognito_user_pool_domain.main: Refreshing state... [id=meetings-388094503220][0m[0m
+[1maws_cognito_user_pool_client.main: Refreshing state... [id=3rs93bjpui3leuq7qu2u37sn12][0m[0m
+[1maws_lambda_permission.mailer_invoke_permission: Refreshing state... [id=AllowExecutionFromS3Bucket][0m[0m
+[1maws_iam_role_policy.report_builder_sqs: Refreshing state... [id=meetings-report-builder-role:SqsReportsConsumerAccess][0m[0m
+[1maws_iam_role_policy.report_builder_s3: Refreshing state... [id=meetings-report-builder-role:S3ReportsPutAccess][0m[0m
+[1maws_iam_role_policy_attachment.report_builder_vpc_access: Refreshing state... [id=meetings-report-builder-role/arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole][0m[0m
+[1maws_lambda_function.report_builder: Refreshing state... [id=meetings-report-builder][0m[0m
+[1maws_s3_bucket_lifecycle_configuration.reports: Refreshing state... [id=meetings-reports-388094503220][0m[0m
+[1maws_s3_bucket_notification.reports: Refreshing state... [id=meetings-reports-388094503220][0m[0m
+[1maws_s3_bucket_public_access_block.reports: Refreshing state... [id=meetings-reports-388094503220][0m[0m
+[1maws_cognito_managed_login_branding.main: Refreshing state...[0m[0m
+[1maws_lambda_function.agenda_parser: Refreshing state... [id=meetings-agenda-parser][0m[0m
+[1maws_lambda_event_source_mapping.report_builder: Refreshing state... [id=62ecee0b-c8d2-429e-85d2-5d582aea248f][0m[0m
+[1maws_lambda_function_url.agenda_parser: Refreshing state... [id=meetings-agenda-parser][0m[0m
+[1maws_lambda_permission.agenda_parser_url_permission: Refreshing state... [id=FunctionURLAllowPublicAccess][0m[0m
+[1maws_lambda_permission.agenda_parser_invoke_permission: Refreshing state... [id=meetings-ai-AgendaParserFunctionInvokePermission-HxrIATimJrn1][0m[0m
+
+[0m[1m[32mNo changes.[0m[1m Your infrastructure matches the configuration.[0m
+
+[0mTerraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
+[90m
+─────────────────────────────────────────────────────────────────────────────[0m
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now. or run speculative plans via GitHub Pull Requests.

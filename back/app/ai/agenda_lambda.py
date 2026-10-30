@@ -23,11 +23,8 @@ if not logger.handlers:
     logger.addHandler(sh)
 
 
-CORS_HEADERS = {
+RESPONSE_HEADERS = {
     "content-type": "application/json",
-    "access-control-allow-origin": "*",
-    "access-control-allow-headers": "authorization, content-type",
-    "access-control-allow-methods": "POST, OPTIONS",
 }
 
 
@@ -53,7 +50,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     if http_method == "OPTIONS":
         return {
             "statusCode": 200,
-            "headers": CORS_HEADERS,
+            "headers": RESPONSE_HEADERS,
             "body": "",
         }
 
@@ -68,7 +65,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         if not auth_header.startswith("Bearer "):
             return {
                 "statusCode": 401,
-                "headers": CORS_HEADERS,
+                "headers": RESPONSE_HEADERS,
                 "body": json.dumps({"error": "Authorization Bearer token required"}),
             }
         token = auth_header.split(" ", 1)[1].strip()
@@ -78,7 +75,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             logger.warning("Token verification failed: %s", err)
             return {
                 "statusCode": 401,
-                "headers": CORS_HEADERS,
+                "headers": RESPONSE_HEADERS,
                 "body": json.dumps({"error": f"Unauthorized: {err}"}),
             }
 
@@ -92,7 +89,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     except Exception:
         return {
             "statusCode": 400,
-            "headers": CORS_HEADERS,
+            "headers": RESPONSE_HEADERS,
             "body": json.dumps({"error": "Invalid JSON request body"}),
         }
 
@@ -100,7 +97,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     if not isinstance(text, str) or not text.strip():
         return {
             "statusCode": 400,
-            "headers": CORS_HEADERS,
+            "headers": RESPONSE_HEADERS,
             "body": json.dumps({"error": "Field 'text' is required"}),
         }
 
@@ -108,7 +105,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     if len(text) > 10_000:
         return {
             "statusCode": 413,
-            "headers": CORS_HEADERS,
+            "headers": RESPONSE_HEADERS,
             "body": json.dumps(
                 {"error": f"Payload too large: text length ({len(text)}) exceeds maximum of 10,000 characters"}
             ),
@@ -122,7 +119,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         today = date.today()
 
     tz = body.get("tz") or "UTC"
-    model = body.get("model") or getattr(settings, "parser_model", "anthropic.claude-haiku-5-5")
+    model = body.get("model") or getattr(settings, "parser_model", "us.anthropic.claude-haiku-4-5")
 
     started = time.monotonic()
     try:
@@ -131,14 +128,14 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         logger.warning("AgendaParseError: %s", e)
         return {
             "statusCode": 422,
-            "headers": CORS_HEADERS,
+            "headers": RESPONSE_HEADERS,
             "body": json.dumps({"error": str(e)}),
         }
     except Exception as e:
         logger.error("Failed to parse agenda: %s", e, exc_info=True)
         return {
             "statusCode": 500,
-            "headers": CORS_HEADERS,
+            "headers": RESPONSE_HEADERS,
             "body": json.dumps({"error": f"LLM parser error: {e}"}),
         }
 
@@ -161,7 +158,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
     return {
         "statusCode": 200,
-        "headers": CORS_HEADERS,
+        "headers": RESPONSE_HEADERS,
         "body": json.dumps(
             {
                 "agenda": agenda.model_dump(mode="json"),

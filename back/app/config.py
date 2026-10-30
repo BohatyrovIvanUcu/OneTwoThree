@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     # Bedrock AI settings
     bedrock_region: str = "us-east-1"
     bedrock_model_id: str = "us.amazon.nova-micro-v1:0"
-    parser_model: str = "anthropic.claude-haiku-4-5-20251001-v1:0"
+    parser_model: str = "us.anthropic.claude-haiku-4-5"
     parser_prompt_version: str = "agenda-v1"
     parser_lambda_url: str = ""
     reports_bucket: str = ""

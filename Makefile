@@ -64,8 +64,9 @@ ECR_REGISTRY = $(firstword $(subst /, ,$(ECR_URI)))
 BACKEND_PARAMS_ARGS = $(shell [ -f $(BACKEND_PARAMS) ] && grep -v -e '^[[:space:]]*$(HASH)' -e '^[[:space:]]*$$' $(BACKEND_PARAMS))
 backend_output  = $(call stack_output,$(BACKEND_STACK),$(1))
 frontend_output = $(call stack_output,$(FRONTEND_STACK),$(1))
-cognito_output  = $(call stack_output,$(COGNITO_STACK),$(1))
-reports_output  = $(call stack_output,$(REPORTS_STACK),$(1))
+tf_output       = $(shell cd infra 2>/dev/null && terraform output -raw $(1) 2>/dev/null)
+cognito_output  = $(call tf_output,$(1))
+reports_output  = $(call tf_output,$(1))
 REPORTS_BUCKET  = $(call reports_output,ReportsBucketName)
 REPORT_QUEUE_URL = $(call reports_output,ReportRequestsQueueUrl)
 REPORT_DLQ_URL   = $(call reports_output,ReportRequestsDlqUrl)
@@ -366,6 +367,10 @@ aws-cognito-destroy: aws-check ## Delete the Cognito stack — ALL user accounts
 	aws cloudformation delete-stack --stack-name $(COGNITO_STACK)
 	aws cloudformation wait stack-delete-complete --stack-name $(COGNITO_STACK)
 
+.PHONY: infra-plan
+infra-plan: ## Run terraform plan in HCP Terraform
+	@cd infra && terraform plan
+
 ##@ Lab 5: Weekly Reports (Event-Driven)
 
 .PHONY: aws-reports-deploy
@@ -504,7 +509,7 @@ AI_STACK         := $(PROJECT)-ai
 AI_TEMPLATE      := infra/ai.yml
 PARSER_MODEL     ?= anthropic.claude-haiku-4-5-20251001-v1:0
 PROMPT_VERSION   ?= agenda-v1
-ai_output         = $(call stack_output,$(AI_STACK),$(1))
+ai_output         = $(call tf_output,$(1))
 AI_FUNCTION_URL  := $(call ai_output,AgendaParserFunctionUrl)
 
 .PHONY: llm-hello
