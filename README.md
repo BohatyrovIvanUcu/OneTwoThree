@@ -293,3 +293,67 @@ and found no differences, so no changes are needed.
 
 Note: You didn't use the -out option to save this plan, so Terraform can't
 guarantee to take exactly these actions if you run "terraform apply" now. or run speculative plans via GitHub Pull Requests.
+
+## Deploy to Google Cloud (GCP)
+
+Spry's core (frontend, FastAPI backend, and PostgreSQL) is also provisioned on **Google Cloud** (`us-central1`, project `onetwothree-514711`) via an isolated Terraform configuration in [`gcp/`](gcp/) with its own HCP Terraform workspace (`123boh/meetings-gcp-dev`, Execution Mode: **Local**).
+
+```mermaid
+flowchart LR
+    B[Browser] -->|HTTPS| FH[Firebase Hosting<br/>built SPA + /api/** rewrite]
+    FH -->|/api/**| CR[Cloud Run<br/>spry-api, min 0 instances]
+    CR -->|/cloudsql socket| DB[(Cloud SQL PostgreSQL<br/>db-f1-micro, 10 GB SSD)]
+    CR -. DB_PASSWORD .-> SM[Secret Manager]
+    CR -. image .-> AR[Artifact Registry]
+```
+
+### What runs on GCP vs what stays on AWS
+- **On GCP:** Firebase Hosting (static SPA + `/api/**` rewrite to Cloud Run), Cloud Run (`back/Dockerfile`, plain `uvicorn` listening on `$PORT` without Mangum/Lambda adapter), Artifact Registry, Cloud SQL for PostgreSQL (`db-f1-micro`, 10 GB SSD), and Secret Manager (`spry-db-password`).
+- **Stays on AWS (`infra/`):** Cognito + Google IdP (`infra/auth.tf`), Weekly Reports pipeline + SES (`infra/reports.tf`), and AI Agenda Parser on Bedrock (`infra/ai.tf`). See [`docs/adr/0008-gcp-migration.md`](docs/adr/0008-gcp-migration.md).
+
+### Deploy steps
+1. Authenticate locally with Google Cloud (no JSON service account keys):
+   ```bash
+   gcloud auth login
+   gcloud auth application-default login
+   gcloud config set project onetwothree-514711
+   gcloud auth application-default set-quota-project onetwothree-514711
+   ```
+2. Ensure workspace `meetings-gcp-dev` in HCP Terraform (`123boh`) has **Execution Mode → Local**, then provision APIs, IAM, Artifact Registry, Secret Manager, and Cloud SQL:
+   ```bash
+   cd gcp
+   terraform init
+   terraform apply
+   ```
+3. Build and push the backend container image to Artifact Registry:
+   ```bash
+   gcloud auth configure-docker us-central1-docker.pkg.dev
+   IMAGE="us-central1-docker.pkg.dev/onetwothree-514711/spry-backend/meetings-backend:latest"
+   docker build --platform linux/amd64 -t "$IMAGE" ../back
+   docker push "$IMAGE"
+   ```
+4. Deploy Cloud Run with the pushed image (on startup the container runs `alembic upgrade head` and seeds sample participants if `SEED=true` and empty):
+   ```bash
+   terraform apply -var="backend_image=$IMAGE"
+   ```
+5. Build and deploy the frontend to Firebase Hosting (with same-origin `/api/**` rewrite to Cloud Run):
+   ```bash
+   cd ../front
+   npm run build
+   npx firebase-tools deploy --only hosting --project onetwothree-514711
+   ```
+
+### Stop or destroy Cloud SQL (avoid unexpected charges)
+Unlike Aurora Serverless v2, Cloud SQL `db-f1-micro` **does not pause on idle** (`$0.0105/h` while running, plus `$1.70/month` for 10 GB SSD even while stopped):
+- **Stop the database instance:**
+  ```bash
+  gcloud sql instances patch spry-postgres --activation-policy=NEVER --project=onetwothree-514711
+  ```
+- **Start it again:**
+  ```bash
+  gcloud sql instances patch spry-postgres --activation-policy=ALWAYS --project=onetwothree-514711
+  ```
+- **Delete all GCP lab resources:**
+  ```bash
+  cd gcp && terraform destroy
+  ```

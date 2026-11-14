@@ -18,3 +18,6 @@ infra/*.params.env
 *.tfplan
 tfplan
 crash.log
+
+# Firebase local deploy cache
+**/.firebase/
