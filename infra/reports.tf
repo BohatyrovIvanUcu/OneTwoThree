@@ -199,6 +199,7 @@ resource "aws_iam_role_policy" "scheduler_sqs" {
 
 resource "aws_scheduler_schedule" "report_schedule" {
   name                         = "${var.project_name}-weekly-report-schedule"
+  state                        = "DISABLED"
   schedule_expression          = var.report_schedule_cron
   schedule_expression_timezone = var.report_schedule_timezone
 
